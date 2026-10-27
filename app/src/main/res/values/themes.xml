@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SmartFarm" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/green_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/green_light</item>
+        <item name="android:colorBackground">@color/screen_bg</item>
+        <item name="android:windowBackground">@color/screen_bg</item>
+        <item name="colorControlNormal">@color/text_primary</item>
+    </style>
+
+    <!-- ===== 공통 텍스트 스타일 ===== -->
+    <style name="Text.SmartFarm.ToolbarTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 카드 제목 (현재온도, 토양수분) -->
+    <style name="Text.SmartFarm.CardLabel" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 카드 큰 제목 (내 작물 확인하기, 작물 선택하기) -->
+    <style name="Text.SmartFarm.CardTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 큰 숫자 (24°C, 32%) -->
+    <style name="Text.SmartFarm.BigValue" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 카드 아래 작은 설명 (• 목표 온도 22~26°C) -->
+    <style name="Text.SmartFarm.Small" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 본문 글자 (로그 내용 등) -->
+    <style name="Text.SmartFarm.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <!-- 회색 보조 글자 (시간, 설명) -->
+    <style name="Text.SmartFarm.Caption" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
+    <!-- "적정" 배지 -->
+    <style name="Text.SmartFarm.Badge" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- ===== 공통 카드 스타일 (흰 배경 + 연한 테두리 + 둥근 모서리) ===== -->
+    <style name="Widget.SmartFarm.Card" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardBackgroundColor">@color/white</item>
+        <item name="strokeColor">@color/card_stroke</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+</resources>

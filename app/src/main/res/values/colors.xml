@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 디자인 시안 기준 색상. 색을 바꿀 땐 여기만 고치면 앱 전체에 반영됩니다. -->
+<resources>
+    <!-- 초록 (온도, 작물, 적정) -->
+    <color name="green_primary">#1E9E5A</color>
+    <color name="green_light">#E7F6EE</color>
+    <color name="green_band">#DDF3E6</color>
+    <color name="green_bright">#3DD68C</color>
+
+    <!-- 파랑 (토양 수분, 온도 그래프) -->
+    <color name="blue_primary">#2F80ED</color>
+    <color name="blue_light">#E8F1FD</color>
+
+    <!-- 빨강 (경고, 병해충, 토양 그래프 선) -->
+    <color name="red_primary">#E5484D</color>
+    <color name="red_dark">#C2363B</color>
+    <color name="red_light">#FDEDEE</color>
+    <color name="soil_line">#E5534B</color>
+
+    <!-- 글자 -->
+    <color name="text_primary">#1B1F1D</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_tertiary">#9AA1A9</color>
+
+    <!-- 배경 / 카드 -->
+    <color name="screen_bg">#F4F6F5</color>
+    <color name="card_stroke">#ECEFED</color>
+    <color name="item_bg">#F6F7F7</color>
+    <color name="chart_grid">#EEF0EF</color>
+    <color name="photo_placeholder">#E3E8E5</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- 경고 팝업 (어두운 카드) -->
+    <color name="dim_bg">#99000000</color>
+    <color name="dialog_bg">#1E2A32</color>
+    <color name="dialog_inner">#283640</color>
+    <color name="dialog_text_sub">#A9B4BC</color>
+    <color name="alert_bg">#3A2328</color>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SimpleLineChartView(그래프)를 XML에서 꾸밀 수 있게 해주는 속성 목록.
+    예) <com.smartfarm.app.ui.common.SimpleLineChartView
+            app:chartLineColor="@color/blue_primary"
+            app:chartYMin="0" app:chartYMax="35" app:chartYStep="5" ... />
+    → 그래프 모양은 XML, 그래프에 들어갈 숫자는 코드(setData)가 담당.
+-->
+<resources>
+    <declare-styleable name="SimpleLineChartView">
+        <attr name="chartLineColor" format="color" />
+        <!-- 선 아래 그라데이션 색 (안 쓰면 채우지 않음) -->
+        <attr name="chartAreaColor" format="color" />
+        <attr name="chartYMin" format="float" />
+        <attr name="chartYMax" format="float" />
+        <attr name="chartYStep" format="float" />
+        <!-- 적정 범위 띠 (둘 다 넣어야 표시) -->
+        <attr name="chartNormalMin" format="float" />
+        <attr name="chartNormalMax" format="float" />
+        <!-- 가장 높은 점 위에 붙일 단위 (예: °C). 안 쓰면 표시 안 함 -->
+        <attr name="chartMaxLabelUnit" format="string" />
+    </declare-styleable>
+</resources>

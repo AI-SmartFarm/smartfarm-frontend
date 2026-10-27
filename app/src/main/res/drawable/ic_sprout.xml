@@ -1,0 +1,14 @@
+<!-- 새싹 아이콘 (내 작물 확인하기, 작물 선택하기) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp" android:height="20dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <!-- 줄기 -->
+    <path android:fillColor="@color/green_primary"
+        android:pathData="M11,21h2v-9h-2z" />
+    <!-- 왼쪽 잎 -->
+    <path android:fillColor="@color/green_primary"
+        android:pathData="M12,13C12,8.6 8.4,5 4,5C4,9.4 7.6,13 12,13z" />
+    <!-- 오른쪽 잎 -->
+    <path android:fillColor="@color/green_primary"
+        android:pathData="M12,11C12,7.1 15.1,4 19,4C19,7.9 15.9,11 12,11z" />
+</vector>

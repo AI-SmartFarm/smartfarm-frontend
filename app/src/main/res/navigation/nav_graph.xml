@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    화면 목록 + 화면 이동 경로.
+    Android Studio에서 이 파일을 열고 [Design] 탭을 누르면 화살표로 연결된 흐름도가 보입니다.
+
+    대시보드(homeFragment)
+      ├─ 현재온도 카드        → 온도 로그
+      ├─ 토양수분 카드        → 토양 수분 로그
+      └─ 내 작물 확인하기 카드 → 내 작물 확인
+
+    android:label 값이 Toolbar 제목으로 표시됩니다.
+-->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.smartfarm.app.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home">
+
+        <action
+            android:id="@+id/action_home_to_temperatureLog"
+            app:destination="@id/temperatureLogFragment" />
+        <action
+            android:id="@+id/action_home_to_soilLog"
+            app:destination="@id/soilLogFragment" />
+        <action
+            android:id="@+id/action_home_to_cropCheck"
+            app:destination="@id/cropCheckFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/temperatureLogFragment"
+        android:name="com.smartfarm.app.ui.temperature.TemperatureLogFragment"
+        android:label="@string/title_temperature_log"
+        tools:layout="@layout/fragment_temperature_log" />
+
+    <fragment
+        android:id="@+id/soilLogFragment"
+        android:name="com.smartfarm.app.ui.soil.SoilLogFragment"
+        android:label="@string/title_soil_log"
+        tools:layout="@layout/fragment_soil_log" />
+
+    <fragment
+        android:id="@+id/cropCheckFragment"
+        android:name="com.smartfarm.app.ui.crop.CropCheckFragment"
+        android:label="@string/title_crop_check"
+        tools:layout="@layout/fragment_crop_check" />
+
+    <!-- ===== 병해충 발생 알림 팝업 ===== -->
+    <!-- 어느 화면에서든 띄울 수 있는 전역 action (나중에 FCM 알림 받았을 때도 사용) -->
+    <action
+        android:id="@+id/action_global_warningDialog"
+        app:destination="@id/warningDialog" />
+
+    <dialog
+        android:id="@+id/warningDialog"
+        android:name="com.smartfarm.app.ui.warning.WarningDialogFragment"
+        tools:layout="@layout/dialog_warning">
+
+        <!-- 팝업에 넘겨주는 값 (이름이 WarningDialogFragment의 ARG_... 와 같아야 함) -->
+        <argument
+            android:name="pestName"
+            android:defaultValue="병해충"
+            app:argType="string" />
+        <argument
+            android:name="deviceName"
+            android:defaultValue="순환팬"
+            app:argType="string" />
+        <argument
+            android:name="timerMinutes"
+            android:defaultValue="0"
+            app:argType="integer" />
+
+        <!-- [확인 및 조치 내역 보기] → 팝업 닫고 내 작물 확인 화면으로 -->
+        <action
+            android:id="@+id/action_warningDialog_to_cropCheck"
+            app:destination="@id/cropCheckFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/warningDialog"
+            app:popUpToInclusive="true" />
+    </dialog>
+
+</navigation>

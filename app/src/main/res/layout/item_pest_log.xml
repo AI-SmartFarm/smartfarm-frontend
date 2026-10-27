@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 병해충 로그 한 줄 (내 작물 확인에서 사용)
+     [9/7]  흰가루병 발생, 순환팬 가동
+            환경 습도 78% 감지 후 AI 스마트 순환팬 즉시 가동      -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_item_pest"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/bg_date_pest"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
+        android:textColor="@color/red_primary"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        tools:text="9/7" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/red_dark"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="흰가루병 발생, 순환팬 가동" />
+
+        <TextView
+            android:id="@+id/tvDetail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textAppearance="@style/Text.SmartFarm.Caption"
+            tools:text="환경 습도 78% 감지 후 AI 스마트 순환팬 즉시 가동" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">My Farm</string>
+
+    <!-- ===== 화면 제목 (Toolbar) ===== -->
+    <string name="title_home">My Farm</string>
+    <string name="title_temperature_log">온도 로그</string>
+    <string name="title_soil_log">토양 수분 로그</string>
+    <string name="title_crop_check">내 작물 확인</string>
+
+    <!-- ===== 대시보드: 현재온도 카드 ===== -->
+    <string name="home_label_temperature">현재온도</string>
+    <string name="home_temperature_value">24°C</string>
+    <string name="home_temperature_range">• 목표 온도 22~26°C</string>
+
+    <!-- ===== 대시보드: 토양수분 카드 ===== -->
+    <string name="home_label_soil">토양수분</string>
+    <string name="home_soil_value" formatted="false">32%</string>
+    <string name="home_soil_range" formatted="false">• 수분 적정 기준 30~50%</string>
+
+    <!-- ===== 대시보드: 내 작물 확인하기 카드 ===== -->
+    <string name="home_crop_check_title">내 작물\n확인하기</string>
+    <string name="home_crop_check_link">확인하기</string>
+
+    <!-- ===== 대시보드: 작물 선택하기 카드 ===== -->
+    <string name="home_crop_select_title">작물 선택하기</string>
+    <string name="crop_selected_toast">%1$s(으)로 설정했습니다</string>
+    <string-array name="crop_list">
+        <item>토마토</item>
+        <item>오이</item>
+        <item>고추</item>
+        <item>상추</item>
+        <item>딸기</item>
+    </string-array>
+
+    <!-- ===== 공통 ===== -->
+    <string name="action_refresh">새로고침</string>
+    <string name="refreshed_toast">최신 데이터로 새로고침했습니다</string>
+    <string name="status_normal">적정</string>
+    <string name="status_warning">주의</string>
+    <string name="unit_celsius">°C</string>
+    <string name="unit_percent" formatted="false">%</string>
+    <string name="activity_log_title">활동로그</string>
+    <string name="log_empty">아직 기록이 없습니다</string>
+    <string name="chart_no_data">데이터 없음</string>
+
+    <!-- ===== 온도 로그 ===== -->
+    <!-- <b><font> 태그: 범위 부분만 초록 굵게 (XML 미리보기에서도 그대로 보임) -->
+    <string name="temp_value">24.5</string>
+    <string name="temp_range_desc">목표 생육 온도 <b><font color="#1E9E5A">20°C ~ 26°C</font></b> 유지 중</string>
+    <string name="temp_chart_title">온도 변화</string>
+    <string name="temp_chart_legend">적정 생육 범위 (20~26°C)</string>
+    <string name="temp_chart_footer">단위: °C / 시간별</string>
+    <string name="temp_log_chip">자동 제어 내역</string>
+
+    <!-- ===== 토양 수분 로그 ===== -->
+    <string name="soil_value">32</string>
+    <string name="soil_range_desc" formatted="false">적정 생육 범위 <b><font color="#1E9E5A">30% ~ 50%</font></b></string>
+    <string name="soil_chart_title">습도 변화</string>
+    <string name="soil_log_count">총 %1$d건의 자동제어 기록</string>
+
+    <!-- ===== 내 작물 확인 ===== -->
+    <string name="pest_log_title">로그</string>
+    <string name="pest_log_count">전체 %1$d건 기록</string>
+
+    <!-- ===== 병해충 발생 알림 팝업 ===== -->
+    <string name="alert_chip">AI 병해충 감지 경보</string>
+    <string name="alert_title">‘%1$s’이(가) 발생했습니다.</string>
+    <string name="alert_message_line1">권장대처법에 따라</string>
+    <string name="alert_message_line2">‘%1$s(을)’ 가동합니다.</string>
+    <string name="alert_action_title">%1$s 자동 가동 중</string>
+    <string name="alert_action_timer">타이머: %1$d분 연속 가동</string>
+    <string name="alert_confirm">확인 및 조치 내역 보기</string>
+    <string name="alert_close">닫기</string>
+</resources>
