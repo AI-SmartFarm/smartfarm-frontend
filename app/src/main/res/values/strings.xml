@@ -5,7 +5,7 @@
     <!-- ===== 화면 제목 (Toolbar) ===== -->
     <string name="title_home">My Farm</string>
     <string name="title_temperature_log">온도 로그</string>
-    <string name="title_soil_log">토양 수분 로그</string>
+    <string name="title_soil_log">토양 습도 로그</string>
     <string name="title_crop_check">내 작물 확인</string>
 
     <!-- ===== 대시보드: 현재온도 카드 ===== -->
@@ -13,10 +13,10 @@
     <string name="home_temperature_value">24°C</string>
     <string name="home_temperature_range">• 목표 온도 20~26°C</string>
 
-    <!-- ===== 대시보드: 토양수분 카드 ===== -->
-    <string name="home_label_soil">토양수분</string>
+    <!-- ===== 대시보드: 토양습도 카드 ===== -->
+    <string name="home_label_soil">토양습도</string>
     <string name="home_soil_value" formatted="false">32%</string>
-    <string name="home_soil_range" formatted="false">• 수분 적정 기준 30~50%</string>
+    <string name="home_soil_range" formatted="false">• 습도 적정 기준 30~50%</string>
 
     <!-- ===== 대시보드: 내 작물 확인하기 카드 ===== -->
     <string name="home_crop_check_title">내 작물\n확인하기</string>
@@ -68,7 +68,7 @@
     <!-- ===== 작물별 적정 범위 (숫자는 코드에서 선택한 작물 값으로 채움) ===== -->
     <!-- 위쪽의 같은 이름(_fmt 없는) 문자열은 Design 탭 미리보기용 기본값(토마토) -->
     <string name="home_temperature_range_fmt">• 목표 온도 %1$d~%2$d°C</string>
-    <string name="home_soil_range_fmt">• 수분 적정 기준 %1$d~%2$d%%</string>
+    <string name="home_soil_range_fmt">• 습도 적정 기준 %1$d~%2$d%%</string>
     <string name="temp_range_desc_fmt"><![CDATA[목표 생육 온도 <b><font color="#1E9E5A">%1$d°C ~ %2$d°C</font></b> 유지 중]]></string>
     <string name="soil_range_desc_fmt"><![CDATA[적정 생육 범위 <b><font color="#1E9E5A">%1$d%% ~ %2$d%%</font></b>]]></string>
     <string name="temp_chart_legend_fmt">적정 생육 범위 (%1$d~%2$d°C)</string>
