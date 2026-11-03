@@ -14,7 +14,7 @@ class FakeFarmRepository {
 
     fun getTemperatureHistory() = ChartData(
         labels = listOf("10시", "11시", "12시", "13시", "14시", "15시", "16시", "17시"),
-        values = listOf(25.0f, 26.0f, 24.8f, 25.6f, 24.6f, 24.9f, 25.5f, 24.5f)
+        values = listOf(30.0f, 26.0f, 24.8f, 25.6f, 24.6f, 24.9f, 25.5f, 24.5f)
     )
 
     fun getTemperatureLogs() = listOf(
