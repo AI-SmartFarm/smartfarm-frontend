@@ -108,6 +108,16 @@ class SimpleLineChartView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * 적정 범위 띠(초록 영역) 바꾸기. XML의 app:chartNormalMin/Max 대신 코드에서 정할 때 사용.
+     * 예) 작물이 바뀌면 binding.chart.setNormalRange(22f, 28f)
+     */
+    fun setNormalRange(min: Float, max: Float) {
+        normalMin = min
+        normalMax = max
+        invalidate()
+    }
+
     /** 그래프에 그릴 숫자 넣기. 넣으면 바로 다시 그려짐 */
     fun setData(labels: List<String>, values: List<Float>) {
         this.labels = labels

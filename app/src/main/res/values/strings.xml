@@ -11,7 +11,7 @@
     <!-- ===== 대시보드: 현재온도 카드 ===== -->
     <string name="home_label_temperature">현재온도</string>
     <string name="home_temperature_value">24°C</string>
-    <string name="home_temperature_range">• 목표 온도 22~26°C</string>
+    <string name="home_temperature_range">• 목표 온도 20~26°C</string>
 
     <!-- ===== 대시보드: 토양수분 카드 ===== -->
     <string name="home_label_soil">토양수분</string>
@@ -25,13 +25,6 @@
     <!-- ===== 대시보드: 작물 선택하기 카드 ===== -->
     <string name="home_crop_select_title">작물 선택하기</string>
     <string name="crop_selected_toast">%1$s(으)로 설정했습니다</string>
-    <string-array name="crop_list">
-        <item>토마토</item>
-        <item>오이</item>
-        <item>고추</item>
-        <item>상추</item>
-        <item>딸기</item>
-    </string-array>
 
     <!-- ===== 공통 ===== -->
     <string name="action_refresh">새로고침</string>
@@ -72,4 +65,11 @@
     <string name="alert_action_timer">타이머: %1$d분 연속 가동</string>
     <string name="alert_confirm">확인 및 조치 내역 보기</string>
     <string name="alert_close">닫기</string>
+    <!-- ===== 작물별 적정 범위 (숫자는 코드에서 선택한 작물 값으로 채움) ===== -->
+    <!-- 위쪽의 같은 이름(_fmt 없는) 문자열은 Design 탭 미리보기용 기본값(토마토) -->
+    <string name="home_temperature_range_fmt">• 목표 온도 %1$d~%2$d°C</string>
+    <string name="home_soil_range_fmt">• 수분 적정 기준 %1$d~%2$d%%</string>
+    <string name="temp_range_desc_fmt"><![CDATA[목표 생육 온도 <b><font color="#1E9E5A">%1$d°C ~ %2$d°C</font></b> 유지 중]]></string>
+    <string name="soil_range_desc_fmt"><![CDATA[적정 생육 범위 <b><font color="#1E9E5A">%1$d%% ~ %2$d%%</font></b>]]></string>
+    <string name="temp_chart_legend_fmt">적정 생육 범위 (%1$d~%2$d°C)</string>
 </resources>

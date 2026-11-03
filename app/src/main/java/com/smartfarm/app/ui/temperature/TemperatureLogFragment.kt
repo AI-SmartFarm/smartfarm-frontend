@@ -5,11 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.smartfarm.app.R
 import com.smartfarm.app.data.FakeFarmRepository
-import com.smartfarm.app.data.FarmStandard
+import com.smartfarm.app.data.FarmSettings
 import com.smartfarm.app.databinding.FragmentTemperatureLogBinding
 import com.smartfarm.app.ui.common.ActivityLogAdapter
 import com.smartfarm.app.ui.common.addRefreshMenu
@@ -18,7 +19,7 @@ import java.util.Locale
 
 /**
  * 온도 로그 화면 (대시보드 "현재온도" 카드에서 이동)
- *  - 현재 온도 + 적정/주의 배지
+ *  - 현재 온도 + 적정/주의 배지 (기준 = 대시보드에서 고른 작물의 적정 범위)
  *  - 시간별 온도 그래프
  *  - 활동로그(자동 제어 내역) 목록
  *  - 상단바 ↻ 버튼으로 새로고침
@@ -52,14 +53,23 @@ class TemperatureLogFragment : Fragment() {
 
     /** 데이터를 불러와서 화면에 표시 (처음 들어올 때 + 새로고침 때) */
     private fun loadData() {
-        // ① 현재 온도 + 배지
+        // 대시보드에서 고른 작물의 적정 범위
+        val standard = FarmSettings.currentStandard
+
+        // ① 현재 온도 + 범위 글자 + 배지
         val temperature = repository.getCurrentTemperature()
         binding.tvValue.text = String.format(Locale.US, "%.1f", temperature)
-        binding.tvBadge.showStatusBadge(FarmStandard.isTemperatureNormal(temperature))
+        binding.tvRange.text = HtmlCompat.fromHtml(
+            getString(R.string.temp_range_desc_fmt, standard.tempMin, standard.tempMax),
+            HtmlCompat.FROM_HTML_MODE_LEGACY
+        )
+        binding.tvBadge.showStatusBadge(standard.isTemperatureNormal(temperature))
 
-        // ② 그래프
+        // ② 그래프 + 적정 범위 띠
         val history = repository.getTemperatureHistory()
+        binding.chart.setNormalRange(standard.tempMin.toFloat(), standard.tempMax.toFloat())
         binding.chart.setData(history.labels, history.values)
+        binding.tvLegend.text = getString(R.string.temp_chart_legend_fmt, standard.tempMin, standard.tempMax)
 
         // ③ 활동로그
         val logs = repository.getTemperatureLogs()
