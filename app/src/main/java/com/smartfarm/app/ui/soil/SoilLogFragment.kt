@@ -5,11 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.smartfarm.app.R
 import com.smartfarm.app.data.FakeFarmRepository
-import com.smartfarm.app.data.FarmStandard
+import com.smartfarm.app.data.FarmSettings
 import com.smartfarm.app.databinding.FragmentSoilLogBinding
 import com.smartfarm.app.ui.common.ActivityLogAdapter
 import com.smartfarm.app.ui.common.addRefreshMenu
@@ -17,7 +18,7 @@ import com.smartfarm.app.ui.common.showStatusBadge
 
 /**
  * 토양 수분 로그 화면 (대시보드 "토양수분" 카드에서 이동)
- *  - 현재 토양 수분 + 적정/주의 배지
+ *  - 현재 토양 수분 + 적정/주의 배지 (기준 = 대시보드에서 고른 작물의 적정 범위)
  *  - 시간별 습도 그래프
  *  - 활동로그(자동급수 기록) 목록 + 건수
  *  - 상단바 ↻ 버튼으로 새로고침
@@ -50,10 +51,17 @@ class SoilLogFragment : Fragment() {
     }
 
     private fun loadData() {
-        // ① 현재 토양 수분 + 배지
+        // 대시보드에서 고른 작물의 적정 범위
+        val standard = FarmSettings.currentStandard
+
+        // ① 현재 토양 수분 + 범위 글자 + 배지
         val moisture = repository.getCurrentSoilMoisture()
         binding.tvValue.text = moisture.toString()
-        binding.tvBadge.showStatusBadge(FarmStandard.isSoilNormal(moisture))
+        binding.tvRange.text = HtmlCompat.fromHtml(
+            getString(R.string.soil_range_desc_fmt, standard.soilMin, standard.soilMax),
+            HtmlCompat.FROM_HTML_MODE_LEGACY
+        )
+        binding.tvBadge.showStatusBadge(standard.isSoilNormal(moisture))
 
         // ② 그래프
         val history = repository.getSoilMoistureHistory()

@@ -90,6 +90,7 @@
                         android:textAppearance="@style/Text.SmartFarm.BigValue" />
 
                     <TextView
+                        android:id="@+id/tvTemperatureRange"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -164,6 +165,7 @@
                         android:textAppearance="@style/Text.SmartFarm.BigValue" />
 
                     <TextView
+                        android:id="@+id/tvSoilRange"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
