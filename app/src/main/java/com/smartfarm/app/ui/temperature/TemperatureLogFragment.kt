@@ -5,14 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.text.HtmlCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.smartfarm.app.R
 // import com.smartfarm.app.data.FakeFarmRepository
+import com.smartfarm.app.data.FarmSettings
 import com.smartfarm.app.data.RealFarmRepository
 import com.smartfarm.app.data.network.ApiClient
-import com.smartfarm.app.data.FarmStandard
 import com.smartfarm.app.databinding.FragmentTemperatureLogBinding
 import com.smartfarm.app.ui.common.ActivityLogAdapter
 import com.smartfarm.app.ui.common.addRefreshMenu
@@ -56,31 +57,46 @@ class TemperatureLogFragment : Fragment() {
 
     /** 데이터를 불러와서 화면에 표시 (처음 들어올 때 + 새로고침 때) */
     private fun loadData() {
-        //load data 호출 확인
-        android.util.Log.d("SmartFarmAPI", ">>> loadData() 시작됨!")
-
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // ② 백엔드 API에서 데이터 비동기 호출 (suspend 함수)
+                val standard = FarmSettings.currentStandard
+
                 val history = repository.getTemperatureHistory(farmId = "farm1", range = "24h")
 
-                // ③ 그래프 데이터 반영
-                if (history.values.isNotEmpty()) {
-                    binding.chart.setData(history.labels, history.values)
 
-                    // 가장 최근 온도를 현재 온도로 표시 (선택 사항)
-                    val currentTemp = history.values.last().toDouble()
-                    binding.tvValue.text = String.format(Locale.US, "%.1f", currentTemp)
-                    binding.tvBadge.showStatusBadge(FarmStandard.isTemperatureNormal(currentTemp))
+                // ① 현재 온도 + 배지
+                // realfarmrepository에 getCurrentTemperature() 함수 구현되지 않음
+                // val temperature = repository.getCurrentTemperature()
+
+                // history에서 가져온 데이터로 현재 온도 표시
+                if (history.values.isNotEmpty()) {
+                    // history의 가장 최근 온도 사용
+                    val temperature = history.values.last().toDouble()
+
+                    // 현재 온도 및 배지 설정
+                    binding.tvValue.text = String.format(Locale.US, "%.1f", temperature)
+                    binding.tvBadge.showStatusBadge(standard.isTemperatureNormal(temperature))
                 }
 
-                // ④ 활동 로그는 아직 API가 없다면 임시로 빈 리스트 처리 또는 기존 로직 유지
-                // val logs = repository.getTemperatureLogs()
-                // logAdapter.submitList(logs)
-                // binding.tvEmpty.isVisible = logs.isEmpty()
+                // 적정 범위 안내 텍스트 설정 (history 데이터 유무와 상관없이 표시)
+                binding.tvRange.text = HtmlCompat.fromHtml(
+                    getString(R.string.temp_range_desc_fmt, standard.tempMin, standard.tempMax),
+                    HtmlCompat.FROM_HTML_MODE_LEGACY
+                )
+
+                // ② 그래프 + 적정 범위 띠
+                binding.chart.setNormalRange(standard.tempMin.toFloat(), standard.tempMax.toFloat())
+                binding.chart.setData(history.labels, history.values)
+                binding.tvLegend.text =
+                    getString(R.string.temp_chart_legend_fmt, standard.tempMin, standard.tempMax)
+
+                // ③ 활동로그 (제어 명령 API 연동 전까지 빈 리스트 처리)
+                val logs = emptyList<com.smartfarm.app.data.ActivityLog>()
+                logAdapter.submitList(logs)
+                binding.tvEmpty.isVisible = logs.isEmpty()
 
             } catch (e: Exception) {
-                // 네트워크 오류 처리 (필요시 토스트 메시지)
+                android.util.Log.e("SmartFarmAPI", "데이터 로드 실패: ${e.message}")
             }
         }
     }

@@ -31,8 +31,8 @@ class FakeFarmRepository {
     )
 
     fun getSoilLogs() = listOf(
-        ActivityLog("9-3 10:00", "토양 수분 함유량 기준치 미만, 자동급수 완료", ActivityType.WATERING),
-        ActivityLog("9-10 14:00", "토양 수분 함유량 기준치 미만, 자동급수 완료", ActivityType.WATERING)
+        ActivityLog("9-3 10:00", "토양 습도 함유량 기준치 미만, 자동급수 완료", ActivityType.WATERING),
+        ActivityLog("9-10 14:00", "토양 습도 함유량 기준치 미만, 자동급수 완료", ActivityType.WATERING)
     )
 
     // ===== 내 작물 확인 =====

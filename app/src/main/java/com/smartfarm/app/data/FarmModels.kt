@@ -37,14 +37,3 @@ data class PestAlert(
     val deviceName: String,     // "순환팬"
     val timerMinutes: Int       // 60
 )
-
-/** 적정 범위 기준값. 배지(적정/주의) 판단에 사용 */
-object FarmStandard {
-    const val TEMP_MIN = 20.0
-    const val TEMP_MAX = 26.0
-    const val SOIL_MIN = 30
-    const val SOIL_MAX = 50
-
-    fun isTemperatureNormal(value: Double) = value in TEMP_MIN..TEMP_MAX
-    fun isSoilNormal(value: Int) = value in SOIL_MIN..SOIL_MAX
-}
