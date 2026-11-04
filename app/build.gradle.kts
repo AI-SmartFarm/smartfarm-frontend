@@ -63,5 +63,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 
 
-    //FCM은 Firebase 프로젝트 연결(google-services.json) 후 추가
+    // Coil (작물 이미지 로딩용)
+    implementation("io.coil-kt:coil:2.6.0") //확인 필요
+
+    // FCM (Firebase 푸시 알림용)
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
 }

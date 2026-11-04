@@ -1,6 +1,7 @@
 package com.smartfarm.app.data.network
 
 import com.smartfarm.app.data.api.FarmApiService
+import com.smartfarm.app.data.api.PestApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -20,7 +21,13 @@ object ApiClient {
         .addInterceptor(loggingInterceptor)
         .build()
 
-    val farmApiService: FarmApiService by lazy {
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val farmApiService: FarmApiService by lazy { // 주 담당자용 Api 파일
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
@@ -28,4 +35,10 @@ object ApiClient {
             .build()
             .create(FarmApiService::class.java)
     }
+
+    // 보조(세민 님)용 (신규)
+    val pestApi: PestApi by lazy {
+        retrofit.create(PestApi::class.java)
+    }
+
 }
