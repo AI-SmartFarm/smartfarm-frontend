@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         // 제목 옆 아이콘 (0 = 없음) - 디자인 시안 기준
         val icon = when (destination.id) {
             R.id.soilLogFragment -> R.drawable.ic_water_drop
-            R.id.temperatureLogFragment -> 0
+            R.id.temperatureLogFragment -> R.drawable.ic_thermometer
             else -> R.drawable.ic_leaf
         }
         title.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0)

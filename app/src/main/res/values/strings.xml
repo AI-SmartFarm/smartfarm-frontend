@@ -44,13 +44,11 @@
     <string name="temp_chart_title">온도 변화</string>
     <string name="temp_chart_legend">적정 생육 범위 (20~26°C)</string>
     <string name="temp_chart_footer">단위: °C / 시간별</string>
-    <string name="temp_log_chip">자동 제어 내역</string>
 
     <!-- ===== 토양 수분 로그 ===== -->
     <string name="soil_value">32</string>
     <string name="soil_range_desc" formatted="false">적정 생육 범위 <b><font color="#1E9E5A">30% ~ 50%</font></b></string>
     <string name="soil_chart_title">습도 변화</string>
-    <string name="soil_log_count">총 %1$d건의 자동제어 기록</string>
 
     <!-- ===== 내 작물 확인 ===== -->
     <string name="pest_log_title">로그</string>
@@ -72,4 +70,6 @@
     <string name="temp_range_desc_fmt"><![CDATA[목표 생육 온도 <b><font color="#1E9E5A">%1$d°C ~ %2$d°C</font></b> 유지 중]]></string>
     <string name="soil_range_desc_fmt"><![CDATA[적정 생육 범위 <b><font color="#1E9E5A">%1$d%% ~ %2$d%%</font></b>]]></string>
     <string name="temp_chart_legend_fmt">적정 생육 범위 (%1$d~%2$d°C)</string>
+    <!-- 서버 값이 없거나 불러오기 실패일 때 숫자 자리에 표시 -->
+    <string name="value_empty">-</string>
 </resources>
