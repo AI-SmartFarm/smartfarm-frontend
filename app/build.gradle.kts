@@ -53,11 +53,15 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.8.4")
     implementation("androidx.navigation:navigation-ui-ktx:2.8.4")
 
-    // ── 보조 담당이 나중에 추가할 것들 (지금은 주석) ──
-    // Retrofit (Backend API 통신)
-    // implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    // implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    // 코루틴 + lifecycleScope (Polling)
-    // implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    // FCM은 Firebase 프로젝트 연결(google-services.json) 후 추가
+
+    //Retrofit (Backend API 통신)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    //코루틴 + lifecycleScope (API Polling 통신용)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+
+
+    //FCM은 Firebase 프로젝트 연결(google-services.json) 후 추가
 }
