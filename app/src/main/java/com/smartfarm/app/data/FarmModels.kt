@@ -5,6 +5,12 @@ package com.smartfarm.app.data
  * 나중에 Backend API 응답(JSON) 형식이 정해지면 필드 이름을 거기에 맞춰 고치면 됩니다.
  */
 
+/** 현재 센서값 (대시보드). 센서가 없거나 불러오기 실패면 null */
+data class CurrentSensor(
+    val temperature: Double?,   // °C
+    val soilMoisture: Int?      // %
+)
+
 /** 그래프 한 개 분량의 데이터. labels[i] 시각의 값이 values[i] */
 data class ChartData(
     val labels: List<String>,   // x축 글자 ("10시", "11시" ...)

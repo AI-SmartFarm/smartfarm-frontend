@@ -186,16 +186,6 @@
                         android:text="@string/activity_log_title"
                         android:textAppearance="@style/Text.SmartFarm.CardLabel" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_badge_green"
-                        android:paddingHorizontal="10dp"
-                        android:paddingVertical="3dp"
-                        android:text="@string/temp_log_chip"
-                        android:textColor="@color/green_primary"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- 목록 한 줄 모양은 item_activity_log.xml (미리보기는 tools:listitem) -->

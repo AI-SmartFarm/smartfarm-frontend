@@ -30,10 +30,12 @@ data class CropStandard(
 object CropStandards {
     val list = listOf(
         //           이름     온도 최소, 최대   수분 최소, 최대
-        CropStandard("토마토", 20, 26, 30, 50),
-        CropStandard("오이", 22, 28, 50, 70),
-        CropStandard("고추", 22, 30, 40, 60),
+        // 온도 = 밤 적온 하한 ~ 낮 적온 상한 (출처: 농촌진흥청·제주농업기술원 재배 자료)
+        // 수분 = 예시 값 (서버/시뮬레이터 기준과 맞출 것)
+        CropStandard("토마토", 17, 27, 30, 50),
+        CropStandard("오이", 15, 28, 50, 70),
+        CropStandard("고추", 18, 28, 40, 60),
         CropStandard("상추", 15, 20, 50, 70),
-        CropStandard("딸기", 17, 23, 40, 60)
+        CropStandard("딸기", 10, 20, 40, 60)
     )
 }
