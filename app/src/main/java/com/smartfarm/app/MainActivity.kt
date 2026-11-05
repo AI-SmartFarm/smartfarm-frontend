@@ -49,25 +49,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initFcmToken() {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.w("FCM_TEST", "FCM 토큰 가져오기 실패", task.exception)
-                return@addOnCompleteListener
-            }
+        try {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w("FCM_TEST", "FCM 토큰 가져오기 실패", task.exception)
+                    return@addOnCompleteListener
+                }
 
-            val token = task.result
-            Log.d("FCM_TEST", "현재 FCM 토큰: $token")
+                val token = task.result
+                Log.d("FCM_TEST", "현재 FCM 토큰: $token")
 
-            // 백엔드 API-010 호출
-            lifecycleScope.launch(Dispatchers.IO) {
-                val repository = PestRepository()
-                val result = repository.registerFcmToken(token)
-                result.onSuccess {
-                    Log.d("FCM_TEST", "백엔드 FCM 토큰 등록 성공")
-                }.onFailure { error ->
-                    Log.e("FCM_TEST", "백엔드 FCM 토큰 등록 실패: ${error.message}")
+                // 백엔드 API-010 호출
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val repository = PestRepository()
+                    val result = repository.registerFcmToken(token)
+                    result.onSuccess {
+                        Log.d("FCM_TEST", "백엔드 FCM 토큰 등록 성공")
+                    }.onFailure { error ->
+                        Log.e("FCM_TEST", "백엔드 FCM 토큰 등록 실패: ${error.message}")
+                    }
                 }
             }
+        } catch (e: Exception) {
+            // google-services.json 부재 등 파이어베이스 미설정 시 튕김 방지
+            Log.w("FCM_TEST", "Firebase 미초기화 상태 (google-services.json 확인 필요): ${e.message}")
         }
     }
 
