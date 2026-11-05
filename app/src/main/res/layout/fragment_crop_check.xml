@@ -74,13 +74,6 @@
                         android:layout_weight="1"
                         android:text="@string/pest_log_title"
                         android:textAppearance="@style/Text.SmartFarm.CardLabel" />
-
-                    <TextView
-                        android:id="@+id/tvLogCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="@style/Text.SmartFarm.Caption"
-                        tools:text="전체 3건 기록" />
                 </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView

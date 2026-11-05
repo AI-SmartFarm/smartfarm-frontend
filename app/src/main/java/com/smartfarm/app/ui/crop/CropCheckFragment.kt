@@ -49,10 +49,9 @@ class CropCheckFragment : Fragment() {
                 result.onSuccess { diagnoses ->
                     pestAdapter.submitList(diagnoses)
                     safeBinding.tvEmpty.isVisible = diagnoses.isEmpty()
-                    safeBinding.tvLogCount.text = getString(R.string.pest_log_count, diagnoses.size)
+
                 }.onFailure { error ->
                     safeBinding.tvEmpty.isVisible = true
-                    safeBinding.tvLogCount.text = getString(R.string.pest_log_count, 0)
                     context?.let { ctx ->
                         Toast.makeText(ctx, "진단 이력 로드 실패: ${error.message}", Toast.LENGTH_SHORT).show()
                     }
