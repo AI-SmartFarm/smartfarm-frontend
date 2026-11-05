@@ -1,22 +1,28 @@
 package com.smartfarm.app
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
+import com.google.firebase.messaging.FirebaseMessaging
 import com.smartfarm.app.data.FakeFarmRepository
 import com.smartfarm.app.data.PestAlert
+import com.smartfarm.app.data.PestRepository
 import com.smartfarm.app.databinding.ActivityMainBinding
 import com.smartfarm.app.ui.warning.WarningDialogFragment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * 앱 전체의 "틀"을 담당하는 Activity (앱에 Activity는 이것 하나).
@@ -35,9 +41,34 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         applySystemBarPadding()
         setupNavigation()
+
+        //앱 시작 시 FCM 토큰 등록
+        initFcmToken()
+    }
+
+    private fun initFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM_TEST", "FCM 토큰 가져오기 실패", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result
+            Log.d("FCM_TEST", "현재 FCM 토큰: $token")
+
+            // 백엔드 API-010 호출
+            lifecycleScope.launch(Dispatchers.IO) {
+                val repository = PestRepository()
+                val result = repository.registerFcmToken(token)
+                result.onSuccess {
+                    Log.d("FCM_TEST", "백엔드 FCM 토큰 등록 성공")
+                }.onFailure { error ->
+                    Log.e("FCM_TEST", "백엔드 FCM 토큰 등록 실패: ${error.message}")
+                }
+            }
+        }
     }
 
     private fun setupNavigation() {
