@@ -16,14 +16,14 @@ interface PestApi {
     // API-008: 병해충 진단 이력 조회
     @GET("api/v1/farms/{farmId}/diagnoses")
     suspend fun getDiagnoses(
-        @Path("farmId") farmId: String = "greenhouse-01",
+        @Path("farmId") farmId: String,
         @Query("size") size: Int = 20
     ): Response<DiagnosisListResponse>
 
     // API-007-B: 내 작물 최근 사진 조회
     @GET("api/v1/farms/{farmId}/images/latest")
     suspend fun getLatestCropImage(
-        @Path("farmId") farmId: String = "greenhouse-01"
+        @Path("farmId") farmId: String
     ): Response<LatestCropImageResponse>
 
     // API-010: FCM 푸시 알림 토큰 등록

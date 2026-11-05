@@ -9,8 +9,13 @@ import com.smartfarm.app.data.network.ApiClient
 class PestRepository(
     private val pestApi: PestApi = ApiClient.pestApi
 ) {
+    companion object {
+        // 백엔드 명세 기준 기본 농장 ID (현재 단일 농장)
+        const val DEFAULT_FARM_ID = "greenhouse-01"
+    }
+
     // 1. API-008: 병해충 진단 이력 목록 조회
-    suspend fun getDiagnoses(farmId: String = "greenhouse-01", size: Int = 20): Result<List<DiagnosisDto>> {
+    suspend fun getDiagnoses(farmId: String = DEFAULT_FARM_ID, size: Int = 20): Result<List<DiagnosisDto>> {
         return try {
             val response = pestApi.getDiagnoses(farmId, size)
             if (response.isSuccessful && response.body() != null) {
@@ -24,7 +29,7 @@ class PestRepository(
     }
 
     // 2. API-007-B: 내 작물 최근 사진 조회
-    suspend fun getLatestCropImage(farmId: String = "greenhouse-01"): Result<LatestCropImageResponse> {
+    suspend fun getLatestCropImage(farmId: String = DEFAULT_FARM_ID): Result<LatestCropImageResponse> {
         return try {
             val response = pestApi.getLatestCropImage(farmId)
             if (response.isSuccessful && response.body() != null) {
