@@ -81,12 +81,15 @@ class TemperatureLogFragment : Fragment() {
     /** 서버에서 데이터를 받아와 화면에 표시 (처음 들어올 때 + 새로고침 때) */
     private fun loadData() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val standard = FarmSettings.currentStandard
-
-            // 1) API 3개를 동시에 요청 (하나씩 기다리지 않음). 실패하면 null / 빈 목록
+            // 1) API 4개를 동시에 요청 (하나씩 기다리지 않음). 실패하면 null / 빈 목록
+            val cropsJob = async { repository.refreshCropStandards() }          // 작물별 적정 범위
             val temperatureJob = async { repository.getCurrentTemperature() }   // API-002-A
             val historyJob = async { repository.getTemperatureHistory() }       // API-002-B
             val logsJob = async { repository.getTemperatureLogs() }             // API-007-A (TEMP)
+
+            // 서버에서 작물 기준을 받았으면 범위 글자·범례·초록 띠를 서버 값으로 다시 그림
+            if (cropsJob.await()) showCropStandard()
+            val standard = FarmSettings.currentStandard
 
             // 2) ① 현재 온도 + 배지 (값이 없으면 "-", 배지 숨김)
             val temperature = temperatureJob.await()

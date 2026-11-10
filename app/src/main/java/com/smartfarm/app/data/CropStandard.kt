@@ -23,12 +23,16 @@ data class CropStandard(
  * 작물 목록 + 작물별 적정 범위표.
  * 대시보드 드롭다운의 작물 목록도 여기서 가져갑니다 (순서 = 드롭다운 순서).
  *
- * ⚠ 아래 숫자는 일반적인 재배 자료를 참고한 "예시 값"입니다.
- *   팀/백엔드에서 기준이 정해지면 숫자만 고치면 앱 전체(대시보드·온도·토양 화면)에 반영됩니다.
- *   작물을 추가하려면 줄을 하나 더 넣으면 드롭다운에도 자동으로 나타납니다.
+ * 서버(GET /api/v1/crops)에서 받아오면 update() 로 서버 값으로 바뀝니다.
+ * 서버가 꺼져 있거나 아직 API 가 없으면 아래 DEFAULT(앱 기본값)를 그대로 씁니다.
  */
 object CropStandards {
-    val list = listOf(
+
+    /**
+     * 서버에서 못 받았을 때 쓰는 앱 기본값.
+     * ⚠ 일반적인 재배 자료를 참고한 "예시 값"입니다.
+     */
+    private val DEFAULT = listOf(
         //           이름     온도 최소, 최대   수분 최소, 최대
         // 온도 = 밤 적온 하한 ~ 낮 적온 상한 (출처: 농촌진흥청·제주농업기술원 재배 자료)
         // 수분 = 예시 값 (서버/시뮬레이터 기준과 맞출 것)
@@ -38,4 +42,13 @@ object CropStandards {
         CropStandard("상추", 15, 20, 50, 70),
         CropStandard("딸기", 10, 20, 40, 60)
     )
+
+    /** 지금 쓰는 목록. 처음엔 앱 기본값, 서버에서 받으면 서버 값 */
+    var list: List<CropStandard> = DEFAULT
+        private set
+
+    /** 서버에서 받은 목록으로 교체 (비어 있으면 무시하고 지금 목록 유지) */
+    fun update(newList: List<CropStandard>) {
+        if (newList.isNotEmpty()) list = newList
+    }
 }
