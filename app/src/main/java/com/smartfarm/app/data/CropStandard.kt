@@ -51,4 +51,17 @@ object CropStandards {
     fun update(newList: List<CropStandard>) {
         if (newList.isNotEmpty()) list = newList
     }
+
+    /**
+     * 상태 API(002-A)가 알려 준 "농장 작물의 적정 범위"로 그 작물 한 줄만 바꿈.
+     * 예) 서버 작물이 토마토 22~26°C 면 → 목록의 토마토가 22~26 으로 (다른 작물은 그대로)
+     * 목록에 없는 작물이면 맨 뒤에 추가.
+     */
+    fun applyServerStandard(server: CropStandard) {
+        list = if (list.any { it.name == server.name }) {
+            list.map { if (it.name == server.name) server else it }
+        } else {
+            list + server
+        }
+    }
 }

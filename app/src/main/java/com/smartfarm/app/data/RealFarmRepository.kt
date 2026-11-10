@@ -51,6 +51,28 @@ class RealFarmRepository(private val apiService: FarmApiService) {
         val response = apiService.getStatus(FARM_ID)
         Log.d(TAG, "status HTTP ${response.code()} / ${response.body()}")
         if (response.isSuccessful) response.body() else null   // 센서값이 한 번도 없으면 404 → null
+    }?.also { applyServerStandard(it) }
+
+    /**
+     * 상태 응답의 crop + targetMin/Max = 백엔드가 실제 자동 제어에 쓰는 기준.
+     * 그 작물의 적정 범위를 서버 값으로 바꿔 둠 → 화면이 범위 글자를 다시 그리면 서버 값이 보임.
+     * (지금 백엔드에는 토마토 기준만 있음. 다른 작물은 앱 기본값 / GET /crops 값)
+     */
+    private fun applyServerStandard(status: StatusResponse) {
+        val name = status.crop?.nameKo ?: return
+        val tempMin = status.temperature?.targetMin ?: return
+        val tempMax = status.temperature?.targetMax ?: return
+        val soilMin = status.soilMoisture?.targetMin ?: return
+        val soilMax = status.soilMoisture?.targetMax ?: return
+        CropStandards.applyServerStandard(
+            CropStandard(
+                name = name,
+                tempMin = tempMin.roundToInt(),
+                tempMax = tempMax.roundToInt(),
+                soilMin = soilMin.roundToInt(),
+                soilMax = soilMax.roundToInt()
+            )
+        )
     }
 
     // ===================== 작물별 적정 범위 (GET /api/v1/crops, 백엔드에 요청한 설계안) =====================
