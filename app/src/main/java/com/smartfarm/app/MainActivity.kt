@@ -1,11 +1,17 @@
 package com.smartfarm.app
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -16,10 +22,11 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.firebase.messaging.FirebaseMessaging
-import com.smartfarm.app.data.FakeFarmRepository
 import com.smartfarm.app.data.PestAlert
+import com.smartfarm.app.data.PestAlertChecker
 import com.smartfarm.app.data.PestRepository
 import com.smartfarm.app.databinding.ActivityMainBinding
+import com.smartfarm.app.service.PestAlertNotifier
 import com.smartfarm.app.ui.warning.WarningDialogFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,6 +43,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var appBarConfiguration: AppBarConfiguration
 
+    /** Android 13 이상: "알림 허용할까요?" 창의 결과 */
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (!granted) {
+                Toast.makeText(
+                    this,
+                    "알림을 허용하지 않으면 앱이 꺼져 있을 때 병해충 알림을 받을 수 없어요. (설정 → 앱 → 알림에서 바꿀 수 있어요)",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -46,6 +65,40 @@ class MainActivity : AppCompatActivity() {
 
         //앱 시작 시 FCM 토큰 등록
         initFcmToken()
+        askNotificationPermission()
+    }
+
+    /**
+     * 앱이 화면에 나타날 때마다(처음 실행, 다른 앱에서 돌아옴, 폰 알림을 눌러 열림)
+     * 새 병해충 진단이 있는지 확인 → 있으면 팝업.
+     * 화면에 떠 있는 동안 푸시가 오면 바로 다시 확인.
+     */
+    override fun onStart() {
+        super.onStart()
+        PestAlertNotifier.foregroundListener = { checkNewPestAlert() }
+        checkNewPestAlert()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        PestAlertNotifier.foregroundListener = null
+    }
+
+    /** 진단 이력(API-008)에서 새 감염 진단을 찾아 팝업 */
+    private fun checkNewPestAlert() {
+        lifecycleScope.launch {
+            val alert = PestAlertChecker.checkNewInfection(applicationContext) ?: return@launch
+            showPestAlert(alert)
+        }
+    }
+
+    /** Android 13(API 33) 이상은 알림을 띄우려면 사용자 허락이 필요 → 처음 한 번 물어봄 */
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return   // 12 이하는 자동 허용
+        val granted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     private fun initFcmToken() {
@@ -93,18 +146,11 @@ class MainActivity : AppCompatActivity() {
             if (destination.navigatorName == "dialog") return@addOnDestinationChangedListener
             updateToolbarTitle(destination)
         }
-
-        // [테스트용] 상단바 제목을 길게 누르면 병해충 알림 팝업이 뜸
-        // TODO: FCM 연결 후에는 알림을 받았을 때 showPestAlert(...)를 호출하고 이 코드는 삭제
-        binding.tvToolbarTitle.setOnLongClickListener {
-            showPestAlert(FakeFarmRepository().getLatestPestAlert())
-            true
-        }
     }
 
     /**
      * 어느 화면에서든 병해충 발생 알림 팝업 띄우기.
-     * 나중에 FCM 메시지를 받았을 때도 이 함수를 호출하면 됩니다.
+     * 새 감염 진단을 찾으면 checkNewPestAlert() 가 이 함수를 불러 줍니다.
      */
     fun showPestAlert(alert: PestAlert) {
         navController.navigate(
