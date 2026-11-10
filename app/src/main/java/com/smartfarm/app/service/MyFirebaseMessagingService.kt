@@ -26,8 +26,20 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
+    /**
+     * 푸시를 받았을 때. 푸시는 "새 진단 확인해 봐" 신호로만 쓰고,
+     * 팝업 내용은 진단 이력 API(API-008)에서 가져옴 (PestAlertChecker).
+     */
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
-        Log.d("FCM_TEST", "FCM 메시지 수신: ${remoteMessage.notification?.title} / ${remoteMessage.notification?.body}")
+        Log.d(
+            "FCM_TEST",
+            "FCM 메시지 수신: ${remoteMessage.notification?.title} / ${remoteMessage.notification?.body} / data=${remoteMessage.data}"
+        )
+        PestAlertNotifier.onPushReceived(
+            context = applicationContext,
+            title = remoteMessage.notification?.title,
+            body = remoteMessage.notification?.body
+        )
     }
 }

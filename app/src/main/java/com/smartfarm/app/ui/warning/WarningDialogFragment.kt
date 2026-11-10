@@ -43,10 +43,19 @@ class WarningDialogFragment : DialogFragment() {
         val timerMinutes = args.getInt(ARG_TIMER_MINUTES)
 
         binding.tvAlertTitle.text = getString(R.string.alert_title, pestName)
-        binding.tvAlertDevice.text = getString(R.string.alert_message_line2, deviceName)
-        binding.tvActionTitle.text = getString(R.string.alert_action_title, deviceName)
-        binding.tvActionTimer.text = getString(R.string.alert_action_timer, timerMinutes)
-        binding.tvActionTimer.isVisible = timerMinutes > 0
+        if (deviceName.isNotBlank()) {
+            // 자동 대응이 있는 병 (예: 잎곰팡이병 → 순환팬 60분)
+            binding.tvAlertDevice.text = getString(R.string.alert_message_line2, deviceName)
+            binding.tvActionTitle.text = getString(R.string.alert_action_title, deviceName)
+            binding.tvActionTimer.text = getString(R.string.alert_action_timer, timerMinutes)
+            binding.tvActionTimer.isVisible = timerMinutes > 0
+        } else {
+            // 알림만 있는 병 (예: 황화잎말이바이러스 → 장치 제어 없음)
+            binding.tvAlertDevice.text = "직접 조치가 필요해요."
+            binding.tvActionTitle.text = "자동 제어 없음 (알림만)"
+            binding.tvActionTimer.text = "‘확인 및 조치 내역 보기’에서 안내를 확인하세요"
+            binding.tvActionTimer.isVisible = true
+        }
 
         // [확인 및 조치 내역 보기] → 팝업 닫고 "내 작물 확인" 화면으로
         binding.btnConfirm.setOnClickListener {
