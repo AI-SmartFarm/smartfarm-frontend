@@ -87,12 +87,15 @@ class TemperatureLogFragment : Fragment() {
             val historyJob = async { repository.getTemperatureHistory() }       // API-002-B
             val logsJob = async { repository.getTemperatureLogs() }             // API-007-A (TEMP)
 
+            // 상태 API(현재값)도 기다림: 농장 작물의 서버 기준값이 여기에 같이 옴
+            val temperature = temperatureJob.await()
+
             // 서버에서 작물 기준을 받았으면 범위 글자·범례·초록 띠를 서버 값으로 다시 그림
-            if (cropsJob.await()) showCropStandard()
+            cropsJob.await()
+            showCropStandard()   // 서버 기준값(GET /crops 또는 상태 API)이 반영된 범위로 다시 그림
             val standard = FarmSettings.currentStandard
 
             // 2) ① 현재 온도 + 배지 (값이 없으면 "-", 배지 숨김)
-            val temperature = temperatureJob.await()
             if (temperature != null) {
                 binding.tvValue.text = String.format(Locale.US, "%.1f", temperature)
                 binding.tvBadge.showStatusBadge(standard.isTemperatureNormal(temperature))

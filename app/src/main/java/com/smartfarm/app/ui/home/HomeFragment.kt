@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.ColorRes
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -17,7 +19,9 @@ import com.smartfarm.app.databinding.FragmentHomeBinding
 import com.smartfarm.app.ui.common.addRefreshMenu
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import java.util.Locale
+import kotlin.math.roundToInt
 
 /**
  * 대시보드 (My Farm)
@@ -33,6 +37,10 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val repository = RealFarmRepository(ApiClient.farmApiService)
+
+    // 마지막으로 받은 센서값 (작물을 바꾸면 이 값으로 바를 다시 그림)
+    private var lastTemperature: Double? = null
+    private var lastMoisture: Int? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -59,10 +67,11 @@ class HomeFragment : Fragment() {
 
     /** XML 의 미리보기용 더미 값(24°C, 32%)을 지우고 "-" 로 비워둠 */
     private fun showSensorPlaceholder() {
+        lastTemperature = null
+        lastMoisture = null
         binding.tvTemperatureValue.text = getString(R.string.value_empty)
-        binding.progressTemperature.progress = 0
         binding.tvSoilValue.text = getString(R.string.value_empty)
-        binding.progressSoil.progress = 0
+        showBars()   // 값이 없으므로 빈 바
     }
 
     /**
@@ -82,20 +91,70 @@ class HomeFragment : Fragment() {
             }
 
             val sensor = sensorJob.await()
-            val temperature = sensor?.temperature
-            val moisture = sensor?.soilMoisture
+            lastTemperature = sensor?.temperature
+            lastMoisture = sensor?.soilMoisture
+
+            // 상태 API 가 농장 작물(토마토)의 서버 기준값을 줬을 수 있으니 범위 글자·드롭다운 다시 그림
+            if (sensor != null) {
+                setupCropDropdown()
+                showCropRanges()
+            }
 
             binding.tvTemperatureValue.text =
-                if (temperature != null) String.format(Locale.US, "%.1f°C", temperature)
-                else getString(R.string.value_empty)
-            // 막대: 0~40°C 를 0~100% 로 (기준은 팀에서 정하면 바꾸기)
-            binding.progressTemperature.progress =
-                temperature?.let { (it / 40 * 100).toInt().coerceIn(0, 100) } ?: 0
-
+                lastTemperature?.let { String.format(Locale.US, "%.1f°C", it) }
+                    ?: getString(R.string.value_empty)
             binding.tvSoilValue.text =
-                if (moisture != null) "$moisture%" else getString(R.string.value_empty)
-            binding.progressSoil.progress = moisture?.coerceIn(0, 100) ?: 0
+                lastMoisture?.let { "$it%" } ?: getString(R.string.value_empty)
+            showBars()
         }
+    }
+
+    /**
+     * 온도·토양 수분 바를 "선택한 작물의 목표 범위" 기준으로 그림.
+     *  - 목표 범위가 바의 가운데 1/3 에 오도록 눈금을 잡음
+     *      예) 고추 18~28°C → 바 전체 = 8~38°C  (18°C ≈ 33%, 28°C ≈ 67%)
+     *  - 눈금보다 낮으면(영하 포함) 0%, 높으면 100%
+     *  - 목표 범위 안이면 원래 색(온도 초록 / 수분 파랑), 벗어나면 빨강
+     */
+    private fun showBars() {
+        val standard = FarmSettings.currentStandard
+
+        val temperature = lastTemperature
+        binding.progressTemperature.showLevel(
+            progress = temperature?.let { rangeProgress(it, standard.tempMin, standard.tempMax) } ?: 0,
+            isNormal = temperature == null || standard.isTemperatureNormal(temperature),
+            normalColor = R.color.green_primary,
+            normalTrack = R.color.green_light
+        )
+
+        val moisture = lastMoisture
+        binding.progressSoil.showLevel(
+            progress = moisture?.let { rangeProgress(it.toDouble(), standard.soilMin, standard.soilMax) } ?: 0,
+            isNormal = moisture == null || standard.isSoilNormal(moisture),
+            normalColor = R.color.blue_primary,
+            normalTrack = R.color.blue_light
+        )
+    }
+
+    /** 값 → 바 길이(0~100). 눈금 = (최소 - 범위폭) ~ (최대 + 범위폭) */
+    private fun rangeProgress(value: Double, min: Int, max: Int): Int {
+        val span = (max - min).coerceAtLeast(1)
+        val low = min - span
+        val high = max + span
+        return ((value - low) / (high - low) * 100).roundToInt().coerceIn(0, 100)
+    }
+
+    /** 바 길이와 색 바꾸기 (범위 밖이면 빨강) */
+    private fun LinearProgressIndicator.showLevel(
+        progress: Int,
+        isNormal: Boolean,
+        @ColorRes normalColor: Int,
+        @ColorRes normalTrack: Int
+    ) {
+        val ctx = requireContext()
+        setIndicatorColor(ContextCompat.getColor(ctx, if (isNormal) normalColor else R.color.red_primary))
+        trackColor = ContextCompat.getColor(ctx, if (isNormal) normalTrack else R.color.red_light)
+        this.progress = progress
     }
 
     /** 선택된 작물의 적정 범위를 카드 아래 글자에 표시 (• 목표 온도 20~26°C 등) */
@@ -105,6 +164,7 @@ class HomeFragment : Fragment() {
             getString(R.string.home_temperature_range_fmt, standard.tempMin, standard.tempMax)
         binding.tvSoilRange.text =
             getString(R.string.home_soil_range_fmt, standard.soilMin, standard.soilMax)
+        showBars()   // 작물이 바뀌면 바 기준도 바뀜
     }
 
     /** 카드를 누르면 nav_graph.xml 에 정의한 action 으로 화면 이동 */
