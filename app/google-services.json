@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "277581306827",
+    "project_id": "growcare-76ead",
+    "storage_bucket": "growcare-76ead.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:277581306827:android:1b87a35e8ce7e8a9df344e",
+        "android_client_info": {
+          "package_name": "com.smartfarm.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyRl0M-iBc7Ni8ydRHHvhlewETxXnPa9k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
