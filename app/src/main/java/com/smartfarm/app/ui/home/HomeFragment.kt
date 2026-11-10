@@ -15,6 +15,7 @@ import com.smartfarm.app.data.RealFarmRepository
 import com.smartfarm.app.data.network.ApiClient
 import com.smartfarm.app.databinding.FragmentHomeBinding
 import com.smartfarm.app.ui.common.addRefreshMenu
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -70,7 +71,17 @@ class HomeFragment : Fragment() {
      */
     private fun loadSensor() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val sensor = repository.getCurrentSensor()
+            // 작물 목록·적정 범위와 센서값을 동시에 요청
+            val cropsJob = async { repository.refreshCropStandards() }
+            val sensorJob = async { repository.getCurrentSensor() }
+
+            // 서버에서 작물 기준을 받았으면 드롭다운 목록과 범위 글자를 서버 값으로 다시 그림
+            if (cropsJob.await()) {
+                setupCropDropdown()
+                showCropRanges()
+            }
+
+            val sensor = sensorJob.await()
             val temperature = sensor?.temperature
             val moisture = sensor?.soilMoisture
 

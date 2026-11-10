@@ -3,6 +3,7 @@ package com.smartfarm.app.data
 import android.util.Log
 import com.smartfarm.app.data.api.FarmApiService
 import com.smartfarm.app.data.dto.ControlLogDto
+import com.smartfarm.app.data.dto.CropDto
 import com.smartfarm.app.data.dto.StatusResponse
 import com.smartfarm.app.data.dto.TelemetryPointDto
 import kotlinx.coroutines.CancellationException
@@ -50,6 +51,43 @@ class RealFarmRepository(private val apiService: FarmApiService) {
         val response = apiService.getStatus(FARM_ID)
         Log.d(TAG, "status HTTP ${response.code()} / ${response.body()}")
         if (response.isSuccessful) response.body() else null   // 센서값이 한 번도 없으면 404 → null
+    }
+
+    // ===================== 작물별 적정 범위 (GET /api/v1/crops, 백엔드에 요청한 설계안) =====================
+
+    /**
+     * 서버에서 작물 목록·적정 범위를 받아 CropStandards 를 서버 값으로 바꿈.
+     * 성공하면 true (화면이 범위 글자를 다시 그리면 됨).
+     * 실패·404(아직 API 없음)면 false → 앱 기본값(CropStandard.kt)을 그대로 사용.
+     */
+    suspend fun refreshCropStandards(): Boolean {
+        val crops = safeCall("crops") {
+            val response = apiService.getCrops()
+            Log.d(TAG, "crops HTTP ${response.code()} / ${response.body()}")
+            if (response.isSuccessful) response.body()?.crops?.mapNotNull { it.toCropStandard() }
+            else null
+        }
+        if (crops.isNullOrEmpty()) return false
+
+        CropStandards.update(crops)
+        return true
+    }
+
+    /** 서버 작물 하나 → 앱 CropStandard. 이름이나 범위가 하나라도 없으면 그 작물은 뺌 */
+    private fun CropDto.toCropStandard(): CropStandard? {
+        val name = nameKo ?: species ?: return null
+        val tempMin = temperature?.targetMin ?: return null
+        val tempMax = temperature?.targetMax ?: return null
+        val soilMin = soilMoisture?.targetMin ?: return null
+        val soilMax = soilMoisture?.targetMax ?: return null
+        // 화면 글자(%d)가 정수라 반올림 (서버 22.0 → 22)
+        return CropStandard(
+            name = name,
+            tempMin = tempMin.roundToInt(),
+            tempMax = tempMax.roundToInt(),
+            soilMin = soilMin.roundToInt(),
+            soilMax = soilMax.roundToInt()
+        )
     }
 
     // ===================== 그래프 (API-002-B) =====================

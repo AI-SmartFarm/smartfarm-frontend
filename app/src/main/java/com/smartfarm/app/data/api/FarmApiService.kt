@@ -1,6 +1,7 @@
 package com.smartfarm.app.data.api
 
 import com.smartfarm.app.data.dto.ControlLogResponse
+import com.smartfarm.app.data.dto.CropListResponse
 import com.smartfarm.app.data.dto.StatusResponse
 import com.smartfarm.app.data.dto.TelemetryResponse
 import retrofit2.Response
@@ -34,4 +35,8 @@ interface FarmApiService {
         @Query("type") type: String,
         @Query("size") size: Int = 20
     ): Response<ControlLogResponse>
+
+    /** 작물 목록 + 작물별 적정 온도·토양 수분 (명세에 아직 없음 → 백엔드에 요청한 설계안) */
+    @GET("api/v1/crops")
+    suspend fun getCrops(): Response<CropListResponse>
 }
