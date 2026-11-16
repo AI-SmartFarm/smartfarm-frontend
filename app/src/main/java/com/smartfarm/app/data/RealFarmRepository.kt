@@ -3,7 +3,7 @@ package com.smartfarm.app.data
 import android.util.Log
 import com.smartfarm.app.data.api.FarmApiService
 import com.smartfarm.app.data.dto.ControlLogDto
-import com.smartfarm.app.data.dto.CropDto
+import com.smartfarm.app.data.dto.CropChangeRequest
 import com.smartfarm.app.data.dto.StatusResponse
 import com.smartfarm.app.data.dto.TelemetryPointDto
 import kotlinx.coroutines.CancellationException
@@ -70,47 +70,58 @@ class RealFarmRepository(private val apiService: FarmApiService) {
                 tempMin = tempMin.roundToInt(),
                 tempMax = tempMax.roundToInt(),
                 soilMin = soilMin.roundToInt(),
-                soilMax = soilMax.roundToInt()
+                soilMax = soilMax.roundToInt(),
+                species = status.crop?.species.orEmpty()
             )
         )
     }
 
-    // ===================== 작물별 적정 범위 (GET /api/v1/crops, 백엔드에 요청한 설계안) =====================
+    // ===================== 작물별 적정 범위 (GET /api/v1/crops/{species}) =====================
 
     /**
-     * 서버에서 작물 목록·적정 범위를 받아 CropStandards 를 서버 값으로 바꿈.
+     * 지금 고른 작물의 적정 범위를 서버에서 받아 CropStandards 에 반영.
      * 성공하면 true (화면이 범위 글자를 다시 그리면 됨).
-     * 실패·404(아직 API 없음)면 false → 앱 기본값(CropStandard.kt)을 그대로 사용.
+     * 실패하면 false → 앱 기본값(CropStandard.kt) 그대로.
+     *
+     * ⚠ 이 API 는 "조회"만 합니다. 서버의 자동 제어 작물(status 의 crop)은 바뀌지 않음.
      */
     suspend fun refreshCropStandards(): Boolean {
-        val crops = safeCall("crops") {
-            val response = apiService.getCrops()
-            Log.d(TAG, "crops HTTP ${response.code()} / ${response.body()}")
-            if (response.isSuccessful) response.body()?.crops?.mapNotNull { it.toCropStandard() }
-            else null
-        }
-        if (crops.isNullOrEmpty()) return false
+        val current = FarmSettings.currentStandard
+        val species = current.species
+        if (species.isBlank()) return false
 
-        CropStandards.update(crops)
+        val server = safeCall("crop($species)") {
+            val response = apiService.getCrop(species)
+            Log.d(TAG, "crop($species) HTTP ${response.code()} / ${response.body()}")
+            val body = if (response.isSuccessful) response.body() else null
+            val tempMin = body?.temperature?.min
+            val tempMax = body?.temperature?.max
+            val soilMin = body?.soilMoisture?.min
+            val soilMax = body?.soilMoisture?.max
+            if (tempMin == null || tempMax == null || soilMin == null || soilMax == null) null
+            else CropStandard(
+                name = current.name,              // 화면 이름은 앱 것 그대로
+                tempMin = tempMin.roundToInt(),   // 화면 글자(%d)가 정수라 반올림
+                tempMax = tempMax.roundToInt(),
+                soilMin = soilMin.roundToInt(),
+                soilMax = soilMax.roundToInt(),
+                species = species
+            )
+        } ?: return false
+
+        CropStandards.applyServerStandard(server)
         return true
     }
 
-    /** 서버 작물 하나 → 앱 CropStandard. 이름이나 범위가 하나라도 없으면 그 작물은 뺌 */
-    private fun CropDto.toCropStandard(): CropStandard? {
-        val name = nameKo ?: species ?: return null
-        val tempMin = temperature?.targetMin ?: return null
-        val tempMax = temperature?.targetMax ?: return null
-        val soilMin = soilMoisture?.targetMin ?: return null
-        val soilMax = soilMoisture?.targetMax ?: return null
-        // 화면 글자(%d)가 정수라 반올림 (서버 22.0 → 22)
-        return CropStandard(
-            name = name,
-            tempMin = tempMin.roundToInt(),
-            tempMax = tempMax.roundToInt(),
-            soilMin = soilMin.roundToInt(),
-            soilMax = soilMax.roundToInt()
-        )
-    }
+    /**
+     * 드롭다운에서 고른 작물을 서버에 알림 (서버 자동 제어 기준도 그 작물로 바뀜).
+     * 성공하면 true. 실패(아직 API 없음 404, 서버 꺼짐 등)면 false → 화면 표시만 바뀐 상태.
+     */
+    suspend fun changeFarmCrop(species: String): Boolean = safeCall("changeCrop($species)") {
+        val response = apiService.changeCrop(FARM_ID, CropChangeRequest(species))
+        Log.d(TAG, "changeCrop($species) HTTP ${response.code()}")
+        if (response.isSuccessful) true else null
+    } ?: false
 
     // ===================== 그래프 (API-002-B) =====================
 

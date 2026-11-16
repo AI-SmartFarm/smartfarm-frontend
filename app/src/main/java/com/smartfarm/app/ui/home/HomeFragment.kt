@@ -193,7 +193,16 @@ class HomeFragment : Fragment() {
         binding.dropdownCrop.setOnItemClickListener { _, _, position, _ ->
             adapter.selectedPosition = position   // ✓ 표시 위치 변경
             FarmSettings.selectedCropIndex = position
-            showCropRanges()                       // 카드의 범위 글자도 바로 바꾸기
+            showCropRanges()                       // 카드의 범위 글자도 바로 바꾸기 (일단 앱 값)
+            viewLifecycleOwner.lifecycleScope.launch {
+                // ① 서버에 작물 변경 알림 (PUT .../crop) → 서버 자동 제어 기준도 바뀜
+                val species = FarmSettings.currentStandard.species
+                if (species.isNotBlank() && repository.changeFarmCrop(species)) {
+                    loadSensor()   // 바뀐 작물 기준의 상태(목표 범위·현재값) 다시 불러오기
+                }
+                // ② 그 작물의 서버 기준값을 받아서 다시 그림 (GET /api/v1/crops/{species})
+                if (repository.refreshCropStandards()) showCropRanges()
+            }
             Toast.makeText(
                 requireContext(),
                 getString(R.string.crop_selected_toast, crops[position]),
