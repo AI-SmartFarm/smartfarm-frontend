@@ -136,12 +136,11 @@
                     android:layout_marginTop="12dp"
                     app:chartAreaColor="@color/blue_primary"
                     app:chartLineColor="@color/blue_primary"
-                    app:chartMaxLabelUnit="@string/unit_celsius"
                     app:chartNormalMax="26"
                     app:chartNormalMin="20"
-                    app:chartYMax="35"
+                    app:chartYMax="40"
                     app:chartYMin="0"
-                    app:chartYStep="5" />
+                    app:chartYStep="10" />
 
                 <TextView
                     android:layout_width="wrap_content"

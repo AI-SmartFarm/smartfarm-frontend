@@ -122,9 +122,9 @@
                     android:layout_marginTop="12dp"
                     app:chartAreaColor="@color/green_primary"
                     app:chartLineColor="@color/soil_line"
-                    app:chartYMax="70"
+                    app:chartYMax="100"
                     app:chartYMin="0"
-                    app:chartYStep="10" />
+                    app:chartYStep="20" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
