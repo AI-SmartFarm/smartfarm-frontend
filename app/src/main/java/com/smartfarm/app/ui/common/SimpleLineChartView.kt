@@ -19,18 +19,27 @@ import com.smartfarm.app.R
  *
  * ▸ 모양(색, 눈금, 적정 범위 띠)은 XML 속성으로 지정  → res/values/attrs.xml 참고
  *     app:chartLineColor  app:chartAreaColor  app:chartYMin  app:chartYMax  app:chartYStep
- *     app:chartNormalMin  app:chartNormalMax  app:chartMaxLabelUnit
+ *     app:chartNormalMin  app:chartNormalMax  app:chartMaxLabelUnit(넣으면 최고점 위에 값 표시)
  * ▸ 숫자는 코드에서 넣기
  *     binding.chart.setData(labels, values)
  *
- * Design 탭 미리보기에서는 예시 숫자로 그려지므로, XML만 봐도 완성 모양을 확인할 수 있습니다.
- * 이 파일은 "그리는 방법"만 담당해서, 화면 작업할 때는 거의 건드릴 필요가 없습니다.
+ * 실제 데이터는 24시간 × 30분 = 점 최대 48개라서
+ *  - 선은 부드러운 곡선으로, 점(동그라미)은 마지막 값(= 지금)만 강조
+ *  - x축 시간 글자는 겹치지 않게 최대 5개만, 같은 시각은 한 번만 표시
+ * 점이 적을 때(12개 이하, 미리보기 등)는 모든 점에 동그라미를 그립니다.
  */
 class SimpleLineChartView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+
+    companion object {
+        /** 점이 이 개수 이하일 때만 모든 점에 동그라미 */
+        private const val MAX_POINTS_WITH_DOTS = 12
+        /** x축 시간 글자 최대 개수 */
+        private const val MAX_X_LABELS = 5
+    }
 
     // ----- XML 속성으로 정하는 모양 -----
     private var lineColor = ContextCompat.getColor(context, R.color.blue_primary)
@@ -61,7 +70,7 @@ class SimpleLineChartView @JvmOverloads constructor(
     }
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = dp(2f)
+        strokeWidth = dp(2.5f)
         strokeJoin = Paint.Join.ROUND
         strokeCap = Paint.Cap.ROUND
     }
@@ -72,6 +81,7 @@ class SimpleLineChartView @JvmOverloads constructor(
         strokeWidth = dp(1.5f)
     }
     private val pointCenterPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val maxLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = dp(10f)
         isFakeBoldText = true
@@ -103,7 +113,7 @@ class SimpleLineChartView @JvmOverloads constructor(
         if (isInEditMode) {
             val range = yMax - yMin
             labels = listOf("10시", "11시", "12시", "13시", "14시", "15시", "16시", "17시")
-            values = listOf(0.70f, 0.74f, 0.69f, 0.72f, 0.68f, 0.70f, 0.73f, 0.67f)
+            values = listOf(0.55f, 0.62f, 0.58f, 0.66f, 0.60f, 0.57f, 0.63f, 0.59f)
                 .map { yMin + range * it }
         }
     }
@@ -134,11 +144,11 @@ class SimpleLineChartView @JvmOverloads constructor(
             return
         }
 
-        // 그래프가 그려질 영역 (왼쪽: y축 숫자 자리, 아래: x축 글자 자리, 위: 최고점 글자 자리)
+        // 그래프가 그려질 영역 (왼쪽: y축 숫자 자리, 아래: x축 글자 자리, 위: 여백)
         val left = dp(28f)
-        val right = width - dp(10f)
-        val top = dp(16f)
-        val bottom = height - dp(22f)
+        val right = width - dp(12f)
+        val top = dp(12f)
+        val bottom = height - dp(24f)
 
         fun xAt(i: Int) =
             if (values.size == 1) (left + right) / 2f
@@ -147,7 +157,14 @@ class SimpleLineChartView @JvmOverloads constructor(
         fun yAt(v: Float) =
             bottom - (bottom - top) * ((v - yMin) / (yMax - yMin)).coerceIn(0f, 1f)
 
-        // 1) 가로 눈금선 + y축 숫자
+        // 1) 적정 범위 띠 (눈금선보다 먼저 깔아서 선이 위에 보이게)
+        val nMin = normalMin
+        val nMax = normalMax
+        if (nMin != null && nMax != null) {
+            canvas.drawRect(left, yAt(nMax), right, yAt(nMin), bandPaint)
+        }
+
+        // 2) 가로 눈금선 + y축 숫자
         axisTextPaint.textAlign = Paint.Align.RIGHT
         var tick = yMin
         while (tick <= yMax + 0.001f) {
@@ -157,17 +174,16 @@ class SimpleLineChartView @JvmOverloads constructor(
             tick += yStep
         }
 
-        // 2) 적정 범위 띠
-        val nMin = normalMin
-        val nMax = normalMax
-        if (nMin != null && nMax != null) {
-            canvas.drawRect(left, yAt(nMax), right, yAt(nMin), bandPaint)
-        }
-
-        // 3) 꺾은선 경로 만들기
+        // 3) 선 경로: 점과 점 사이를 부드러운 곡선으로 연결
         linePath.reset()
-        values.forEachIndexed { i, value ->
-            if (i == 0) linePath.moveTo(xAt(i), yAt(value)) else linePath.lineTo(xAt(i), yAt(value))
+        linePath.moveTo(xAt(0), yAt(values[0]))
+        for (i in 1..values.lastIndex) {
+            val prevX = xAt(i - 1)
+            val prevY = yAt(values[i - 1])
+            val x = xAt(i)
+            val y = yAt(values[i])
+            val midX = (prevX + x) / 2f
+            linePath.cubicTo(midX, prevY, midX, y, x, y)
         }
 
         // 4) 선 아래 그라데이션 채우기
@@ -179,7 +195,7 @@ class SimpleLineChartView @JvmOverloads constructor(
             areaPath.close()
             areaPaint.shader = LinearGradient(
                 0f, top, 0f, bottom,
-                ColorUtils.setAlphaComponent(color, 90),
+                ColorUtils.setAlphaComponent(color, 70),
                 ColorUtils.setAlphaComponent(color, 0),
                 Shader.TileMode.CLAMP
             )
@@ -190,19 +206,28 @@ class SimpleLineChartView @JvmOverloads constructor(
         linePaint.color = lineColor
         canvas.drawPath(linePath, linePaint)
 
-        // 6) 점 (마지막 점 = 현재 값은 크게 강조)
+        // 6) 점: 점이 많으면 마지막(= 지금 값)만, 적으면 전부
         pointStrokePaint.color = lineColor
         pointCenterPaint.color = lineColor
+        haloPaint.color = ColorUtils.setAlphaComponent(lineColor, 50)
+        val drawAllDots = values.size <= MAX_POINTS_WITH_DOTS
         values.forEachIndexed { i, value ->
+            val isLast = i == values.lastIndex
+            if (!drawAllDots && !isLast) return@forEachIndexed
             val x = xAt(i)
             val y = yAt(value)
-            val radius = if (i == values.lastIndex) dp(5f) else dp(3f)
-            canvas.drawCircle(x, y, radius, pointFillPaint)
-            canvas.drawCircle(x, y, radius, pointStrokePaint)
-            if (i == values.lastIndex) canvas.drawCircle(x, y, dp(2.5f), pointCenterPaint)
+            if (isLast) {
+                canvas.drawCircle(x, y, dp(9f), haloPaint)          // 옅은 테두리 (지금 값 강조)
+                canvas.drawCircle(x, y, dp(5f), pointFillPaint)
+                canvas.drawCircle(x, y, dp(5f), pointStrokePaint)
+                canvas.drawCircle(x, y, dp(2.5f), pointCenterPaint)
+            } else {
+                canvas.drawCircle(x, y, dp(3f), pointFillPaint)
+                canvas.drawCircle(x, y, dp(3f), pointStrokePaint)
+            }
         }
 
-        // 7) 가장 높은 점 위에 값 표시 (예: 26°C)
+        // 7) (XML 에 app:chartMaxLabelUnit 이 있을 때만) 가장 높은 점 위에 값 표시
         maxLabelUnit?.let { unit ->
             val maxIndex = values.indices.maxByOrNull { values[it] } ?: return@let
             maxLabelPaint.color = lineColor
@@ -212,10 +237,20 @@ class SimpleLineChartView @JvmOverloads constructor(
             )
         }
 
-        // 8) x축 글자
+        // 8) x축 시간 글자: 최대 MAX_X_LABELS 개, 같은 글자 연속은 한 번만, 양 끝은 화면 안으로
         axisTextPaint.textAlign = Paint.Align.CENTER
-        labels.forEachIndexed { i, label ->
-            if (i < values.size) canvas.drawText(label, xAt(i), height - dp(6f), axisTextPaint)
+        val count = minOf(labels.size, values.size)
+        if (count > 0) {
+            val step = maxOf(1, (count + MAX_X_LABELS - 1) / MAX_X_LABELS)
+            var lastDrawn: String? = null
+            for (i in 0 until count step step) {
+                val label = labels[i]
+                if (label.isBlank() || label == lastDrawn) continue
+                val half = axisTextPaint.measureText(label) / 2f
+                val x = xAt(i).coerceIn(left + half, right - half)
+                canvas.drawText(label, x, height - dp(6f), axisTextPaint)
+                lastDrawn = label
+            }
         }
     }
 

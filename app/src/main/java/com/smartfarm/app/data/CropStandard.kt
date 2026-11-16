@@ -36,11 +36,11 @@ object CropStandards {
         //           이름     온도 최소, 최대   수분 최소, 최대
         // 온도 = 밤 적온 하한 ~ 낮 적온 상한 (출처: 농촌진흥청·제주농업기술원 재배 자료)
         // 수분 = 예시 값 (서버/시뮬레이터 기준과 맞출 것)
-        CropStandard("토마토", 17, 27, 30, 50),
-        CropStandard("오이", 15, 28, 50, 70),
-        CropStandard("고추", 18, 28, 40, 60),
-        CropStandard("상추", 15, 20, 50, 70),
-        CropStandard("딸기", 10, 20, 40, 60)
+        CropStandard("토마토", 7, 7, 30, 50),
+        CropStandard("오이", 5, 8, 50, 70),
+        CropStandard("고추", 8, 8, 40, 60),
+        CropStandard("상추", 5, 0, 50, 70),
+        CropStandard("딸기", 0, 0, 40, 60)
     )
 
     /** 지금 쓰는 목록. 처음엔 앱 기본값, 서버에서 받으면 서버 값 */
