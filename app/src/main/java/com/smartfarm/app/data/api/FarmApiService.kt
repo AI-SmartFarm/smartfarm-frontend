@@ -13,18 +13,18 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
- * 센서 쪽 API (대시보드 / 온도 로그 / 토양 수분 로그) - 주담당
- * 병해충·사진 API 는 보조 담당의 별도 인터페이스에 둡니다 (같은 파일을 동시에 고치지 않기 위해)
+ * 센서·작물 API (대시보드 / 온도 로그 / 토양 수분 로그).
+ * 병해충·사진·알림 API 는 PestApi 에 따로 둡니다.
  */
 interface FarmApiService {
 
-    /** API-002-A 현재 농장 상태 (현재 온도·토양 수분) */
+    /** API-002-A 현재 농장 상태 (현재 온도·토양 수분 + 농장 작물의 적정 범위) */
     @GET("api/v1/farms/{farmId}/status")
     suspend fun getStatus(
         @Path("farmId") farmId: String
     ): Response<StatusResponse>
 
-    /** API-002-B 환경 데이터 추이 (그래프) */
+    /** API-002-B 환경 데이터 추이 (그래프). 24h = 최근 24시간, 30분 평균 */
     @GET("api/v1/farms/{farmId}/telemetry")
     suspend fun getTelemetry(
         @Path("farmId") farmId: String,
@@ -39,15 +39,15 @@ interface FarmApiService {
         @Query("size") size: Int = 20
     ): Response<ControlLogResponse>
 
-    /** 작물 하나의 적정 온도·토양 수분  예) species = "Tomato" */
+    /** 작물 하나의 적정 온도·토양 수분 (예: species = "Tomato") */
     @GET("api/v1/crops/{species}")
     suspend fun getCrop(
         @Path("species") species: String
     ): Response<CropDto>
 
     /**
-     * 농장 작물 바꾸기 → 서버 자동 제어 기준도 그 작물로.
-     * ⚠ 백엔드에 아직 없음 (제안 형식). 생기기 전까지는 404 → 앱은 화면 표시만 바뀜
+     * 농장 작물 변경 → 서버 자동 제어 기준도 그 작물로 바뀜.
+     * 서버가 지원하지 않으면 실패(404)하고, 앱은 화면 표시만 바뀐 상태로 동작합니다.
      */
     @PUT("api/v1/farms/{farmId}/crop")
     suspend fun changeCrop(

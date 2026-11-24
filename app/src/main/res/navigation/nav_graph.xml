@@ -52,7 +52,7 @@
         tools:layout="@layout/fragment_crop_check" />
 
     <!-- ===== 병해충 발생 알림 팝업 ===== -->
-    <!-- 어느 화면에서든 띄울 수 있는 전역 action (나중에 FCM 알림 받았을 때도 사용) -->
+    <!-- 어느 화면에서든 띄울 수 있는 전역 action (새 감염 진단을 찾으면 MainActivity 가 사용) -->
     <action
         android:id="@+id/action_global_warningDialog"
         app:destination="@id/warningDialog" />

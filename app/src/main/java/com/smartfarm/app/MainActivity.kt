@@ -32,12 +32,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * 앱 전체의 "틀"을 담당하는 Activity (앱에 Activity는 이것 하나).
- *  - Toolbar          : 화면 제목, ← 뒤로가기, (온도·토양 화면에서) ↻ 새로고침
+ * 앱 전체의 "틀"을 담당하는 Activity (앱에 Activity 는 이것 하나).
+ *  - Toolbar          : 화면 제목, ← 뒤로가기, ↻ 새로고침
  *  - NavHostFragment  : 화면(Fragment)이 바뀌는 영역
- * 실제 화면 내용은 전부 Fragment가 담당합니다.
+ *  - 병해충 알림       : FCM 토큰 등록, 알림 권한 요청, 새 감염 진단 확인 → 경고 팝업
+ * 실제 화면 내용은 전부 Fragment 가 담당합니다.
  */
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "FCM"
+    }
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
@@ -47,11 +52,7 @@ class MainActivity : AppCompatActivity() {
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (!granted) {
-                Toast.makeText(
-                    this,
-                    "알림을 허용하지 않으면 앱이 꺼져 있을 때 병해충 알림을 받을 수 없어요. (설정 → 앱 → 알림에서 바꿀 수 있어요)",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, R.string.notification_permission_denied, Toast.LENGTH_LONG).show()
             }
         }
 
@@ -63,15 +64,15 @@ class MainActivity : AppCompatActivity() {
         applySystemBarPadding()
         setupNavigation()
 
-        //앱 시작 시 FCM 토큰 등록
+        // 앱 시작 시 FCM 토큰을 백엔드에 등록 (병해충 푸시를 받기 위해)
         initFcmToken()
         askNotificationPermission()
     }
 
     /**
-     * 앱이 화면에 나타날 때마다(처음 실행, 다른 앱에서 돌아옴, 폰 알림을 눌러 열림)
-     * 새 병해충 진단이 있는지 확인 → 있으면 팝업.
-     * 화면에 떠 있는 동안 푸시가 오면 바로 다시 확인.
+     * 앱이 화면에 나타날 때마다(처음 실행, 다른 앱에서 돌아옴, 휴대폰 알림을 눌러 열림)
+     * 새 감염 진단이 있는지 확인 → 있으면 경고 팝업.
+     * 화면에 떠 있는 동안 푸시가 오면 PestAlertNotifier 가 이 확인을 다시 실행합니다.
      */
     override fun onStart() {
         super.onStart()
@@ -101,31 +102,24 @@ class MainActivity : AppCompatActivity() {
         if (!granted) notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
+    /** 이 기기의 FCM 토큰을 받아 백엔드(API-010)에 등록. 같은 토큰은 서버가 덮어씀 */
     private fun initFcmToken() {
         try {
             FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (!task.isSuccessful) {
-                    Log.w("FCM_TEST", "FCM 토큰 가져오기 실패", task.exception)
+                    Log.w(TAG, "FCM 토큰 가져오기 실패", task.exception)
                     return@addOnCompleteListener
                 }
-
                 val token = task.result
-                Log.d("FCM_TEST", "현재 FCM 토큰: $token")
-
-                // 백엔드 API-010 호출
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val repository = PestRepository()
-                    val result = repository.registerFcmToken(token)
-                    result.onSuccess {
-                        Log.d("FCM_TEST", "백엔드 FCM 토큰 등록 성공")
-                    }.onFailure { error ->
-                        Log.e("FCM_TEST", "백엔드 FCM 토큰 등록 실패: ${error.message}")
-                    }
+                    PestRepository().registerFcmToken(token)
+                        .onSuccess { Log.d(TAG, "FCM 토큰 등록 성공") }
+                        .onFailure { Log.e(TAG, "FCM 토큰 등록 실패: ${it.message}") }
                 }
             }
         } catch (e: Exception) {
-            // google-services.json 부재 등 파이어베이스 미설정 시 튕김 방지
-            Log.w("FCM_TEST", "Firebase 미초기화 상태 (google-services.json 확인 필요): ${e.message}")
+            // Firebase 설정(google-services.json)이 없어도 앱이 꺼지지 않게
+            Log.w(TAG, "Firebase 초기화 안 됨: ${e.message}")
         }
     }
 
@@ -163,7 +157,7 @@ class MainActivity : AppCompatActivity() {
         val title = binding.tvToolbarTitle
         title.text = destination.label // nav_graph.xml 의 android:label
 
-        // 제목 옆 아이콘 (0 = 없음) - 디자인 시안 기준
+        // 제목 옆 아이콘 (디자인 시안 기준)
         val icon = when (destination.id) {
             R.id.soilLogFragment -> R.drawable.ic_water_drop
             R.id.temperatureLogFragment -> R.drawable.ic_thermometer

@@ -19,7 +19,7 @@ import com.smartfarm.app.R
  *
  * ▸ 모양(색, 눈금, 적정 범위 띠)은 XML 속성으로 지정  → res/values/attrs.xml 참고
  *     app:chartLineColor  app:chartAreaColor  app:chartYMin  app:chartYMax  app:chartYStep
- *     app:chartNormalMin  app:chartNormalMax  app:chartMaxLabelUnit(넣으면 최고점 위에 값 표시)
+ *     app:chartNormalMin  app:chartNormalMax
  * ▸ 숫자는 코드에서 넣기
  *     binding.chart.setData(labels, values)
  *
@@ -49,7 +49,6 @@ class SimpleLineChartView @JvmOverloads constructor(
     private var yStep = 10f
     private var normalMin: Float? = null
     private var normalMax: Float? = null
-    private var maxLabelUnit: String? = null
 
     // ----- 코드(setData)로 넣는 숫자 -----
     private var labels: List<String> = emptyList()
@@ -82,11 +81,6 @@ class SimpleLineChartView @JvmOverloads constructor(
     }
     private val pointCenterPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val maxLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = dp(10f)
-        isFakeBoldText = true
-        textAlign = Paint.Align.CENTER
-    }
     private val linePath = Path()
     private val areaPath = Path()
 
@@ -106,7 +100,6 @@ class SimpleLineChartView @JvmOverloads constructor(
                 normalMin = getFloat(R.styleable.SimpleLineChartView_chartNormalMin, 0f)
                 normalMax = getFloat(R.styleable.SimpleLineChartView_chartNormalMax, 0f)
             }
-            maxLabelUnit = getString(R.styleable.SimpleLineChartView_chartMaxLabelUnit)
         }
 
         // Design 탭 미리보기 전용 예시 데이터 (실제 앱에서는 실행되지 않음)
@@ -227,17 +220,7 @@ class SimpleLineChartView @JvmOverloads constructor(
             }
         }
 
-        // 7) (XML 에 app:chartMaxLabelUnit 이 있을 때만) 가장 높은 점 위에 값 표시
-        maxLabelUnit?.let { unit ->
-            val maxIndex = values.indices.maxByOrNull { values[it] } ?: return@let
-            maxLabelPaint.color = lineColor
-            canvas.drawText(
-                formatNumber(values[maxIndex]) + unit,
-                xAt(maxIndex), yAt(values[maxIndex]) - dp(8f), maxLabelPaint
-            )
-        }
-
-        // 8) x축 시간 글자: 최대 MAX_X_LABELS 개, 같은 글자 연속은 한 번만, 양 끝은 화면 안으로
+        // 7) x축 시간 글자: 최대 MAX_X_LABELS 개, 같은 글자 연속은 한 번만, 양 끝은 화면 안으로
         axisTextPaint.textAlign = Paint.Align.CENTER
         val count = minOf(labels.size, values.size)
         if (count > 0) {

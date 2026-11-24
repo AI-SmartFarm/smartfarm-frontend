@@ -31,7 +31,6 @@
     <color name="white">#FFFFFF</color>
 
     <!-- 경고 팝업 (어두운 카드) -->
-    <color name="dim_bg">#99000000</color>
     <color name="dialog_bg">#1E2A32</color>
     <color name="dialog_inner">#283640</color>
     <color name="dialog_text_sub">#A9B4BC</color>

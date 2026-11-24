@@ -7,17 +7,23 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * 백엔드 통신 설정 (Retrofit). 앱 전체에서 하나만 만들어 같이 씁니다.
+ */
 object ApiClient {
-    // 백엔드 테스트 서버 (Cloudflare 임시 터널 → 주소가 바뀌면 백엔드가 단톡에 공지, 여기 한 줄만 고치면 됨)
-    // https 라 포트 번호 불필요. 끝의 "/" 는 Retrofit 규칙이라 꼭 붙여야 함
-    // (내 PC 에서 백엔드를 직접 돌려 에뮬레이터로 볼 때는 "http://10.0.2.2:8080/")
+
+    /**
+     * 백엔드 서버 주소. 서버 주소가 바뀌면 이 한 줄만 고치면 됩니다.
+     *  - https 라서 포트 번호가 필요 없음
+     *  - 끝의 "/" 는 Retrofit 규칙이라 꼭 붙여야 함
+     */
     const val BASE_URL = "https://search-inflation-documentation-fellowship.trycloudflare.com/"
 
-    /** 서버가 주는 상대 경로(예: "/api/v1/images/34/file")를 전체 주소로. 사진 로딩(Coil 등)에 사용 */
+    /** 서버가 주는 상대 경로("/api/v1/images/34/file")를 전체 주소로 바꿈 (사진 로딩용) */
     fun fullUrl(path: String): String = BASE_URL.trimEnd('/') + "/" + path.trimStart('/')
 
+    /** 요청·응답 JSON 을 Logcat("okhttp")에 출력 (연동 확인용) */
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        // 통신 로그(요청/응답 JSON)를 Logcat에 출력해주는 설정
         level = HttpLoggingInterceptor.Level.BODY
     }
 
@@ -31,18 +37,9 @@ object ApiClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val farmApiService: FarmApiService by lazy { // 주 담당자용 Api 파일
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(FarmApiService::class.java)
-    }
+    /** 센서·작물 API (대시보드 / 온도 로그 / 토양 수분 로그) */
+    val farmApiService: FarmApiService by lazy { retrofit.create(FarmApiService::class.java) }
 
-    // 보조(세민 님)용 (신규)
-    val pestApi: PestApi by lazy {
-        retrofit.create(PestApi::class.java)
-    }
-
+    /** 병해충 진단·사진·알림 토큰 API (내 작물 확인 / 병해충 알림) */
+    val pestApi: PestApi by lazy { retrofit.create(PestApi::class.java) }
 }

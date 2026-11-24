@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 병해충 로그 한 줄 (내 작물 확인에서 사용)
-     [9/7]  흰가루병 발생, 순환팬 가동
-            환경 습도 78% 감지 후 AI 스마트 순환팬 즉시 가동      -->
+     [2026-11-20 10:10:44]  잎곰팡이병 (중기)
+                            환기를 철저히 해 과습을 막고, 병든 잎은 일찍 제거하세요.   -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
