@@ -11,7 +11,7 @@ data class TelemetryResponse(
 
 /** 그래프 점 하나. 그 구간에 센서값이 없으면 null 일 수 있음 → 그래프에서 제외 */
 data class TelemetryPointDto(
-    @SerializedName("time") val time: String?, // 예: "2026-10-28T10:00:00+09:00"
+    @SerializedName("time") val time: String?,               // "2026-11-20T10:00:00+09:00"
     @SerializedName("temperature") val temperature: Float?,
     @SerializedName("soilMoisture") val soilMoisture: Float?
 )

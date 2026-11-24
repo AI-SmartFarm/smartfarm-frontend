@@ -8,5 +8,4 @@ local.properties
 /captures/
 .externalNativeBuild/
 .cxx/
-# Firebase 설정 파일은 팀 정책에 따라 커밋 여부 결정
-# app/google-services.json
+# app/google-services.json 은 Firebase 설정 파일로 저장소에 포함 (비밀 키 아님)

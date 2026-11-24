@@ -12,21 +12,19 @@ import com.smartfarm.app.MainActivity
 import com.smartfarm.app.R
 
 /**
- * 푸시(FCM)를 받았을 때
- *  - 앱이 화면에 떠 있으면 → MainActivity 에게 "진단 확인해서 팝업 띄워"
- *  - 앱이 꺼져 있거나 뒤에 있으면 → 폰 상단 알림. 누르면 앱이 열리고,
+ * 병해충 푸시(FCM)를 받았을 때 앱 상태에 따라 나눠 처리합니다.
+ *  - 앱이 화면에 떠 있으면 → MainActivity 가 새 진단을 확인해서 경고 팝업
+ *  - 앱이 꺼져 있거나 뒤에 있으면 → 휴대폰 상단 알림. 누르면 앱이 열리고
  *    MainActivity.onStart 의 진단 확인이 팝업을 띄움
  *
- * 팝업 내용은 푸시가 아니라 진단 이력 API(API-008)에서 가져오므로
- * 백엔드는 푸시에 무엇을 넣든 상관없습니다 (제목·내용이 있으면 폰 알림 문구로만 씀).
+ * 팝업 내용은 진단 이력 API(API-008)에서 가져오므로, 푸시의 제목·내용은 휴대폰 알림 문구로만 씁니다.
  */
 object PestAlertNotifier {
 
-    private const val TAG = "FCM_TEST"
+    private const val TAG = "FCM"
     private const val CHANNEL_ID = "pest_alert"
-    private const val CHANNEL_NAME = "병해충 알림"
 
-    /** 화면에 떠 있는 MainActivity 가 등록. null 이면 앱이 화면에 없음 → 폰 알림 */
+    /** 화면에 떠 있는 MainActivity 가 등록. null 이면 앱이 화면에 없음 → 휴대폰 알림 */
     @Volatile
     var foregroundListener: (() -> Unit)? = null
 
@@ -53,8 +51,8 @@ object PestAlertNotifier {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_leaf)
-            .setContentTitle(title ?: "🐛 병해충 감지 알림")
-            .setContentText(body ?: "AI가 새 병해충 진단을 보냈어요. 눌러서 확인하세요.")
+            .setContentTitle(title ?: context.getString(R.string.pest_notification_title))
+            .setContentText(body ?: context.getString(R.string.pest_notification_body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
@@ -64,13 +62,17 @@ object PestAlertNotifier {
             NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), notification)
         } catch (e: SecurityException) {
             // 사용자가 알림 권한을 거부한 경우
-            Log.w(TAG, "알림 권한이 없어 폰 알림을 띄우지 못함: ${e.message}")
+            Log.w(TAG, "알림 권한이 없어 휴대폰 알림을 띄우지 못함: ${e.message}")
         }
     }
 
     /** Android 8 이상은 알림 "채널"이 있어야 알림이 뜸 (이미 있으면 아무 일도 안 함) */
     private fun createChannel(context: Context) {
-        val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            context.getString(R.string.pest_notification_channel),
+            NotificationManager.IMPORTANCE_HIGH
+        )
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 }

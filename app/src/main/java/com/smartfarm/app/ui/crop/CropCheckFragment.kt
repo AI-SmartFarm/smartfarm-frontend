@@ -4,25 +4,26 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.smartfarm.app.R
 import com.smartfarm.app.data.PestRepository
+import com.smartfarm.app.data.network.ApiClient
 import com.smartfarm.app.databinding.FragmentCropCheckBinding
 import kotlinx.coroutines.launch
-import android.widget.ImageView
-import coil.load
-import com.smartfarm.app.data.network.ApiClient
 
 /**
- * 내 작물 확인 화면 (병해충 이력 및 작물 사진)
+ * 내 작물 확인 화면 (대시보드 "내 작물 확인하기" 카드 또는 병해충 팝업에서 이동)
+ *  - 작물 사진: 최근 작물 사진(API-007-B), 없으면 가장 최근 진단 사진
+ *  - 병해충 로그: AI 진단 이력(API-008)을 날짜별로 표시
  */
 class CropCheckFragment : Fragment() {
 
     private var _binding: FragmentCropCheckBinding? = null
-    // 안전한 binding 접근을 위해 get()에 널 체크 또는 _binding 사용
     private val binding get() = _binding!!
 
     private val repository = PestRepository()
@@ -38,38 +39,39 @@ class CropCheckFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.recyclerLogs.adapter = pestAdapter
-
         loadData()
     }
 
     private fun loadData() {
         viewLifecycleOwner.lifecycleScope.launch {
-            // 1. 병해충 진단 이력 조회 (API-008)
+            // 1. 병해충 진단 이력 (API-008)
             val result = repository.getDiagnoses()
-            // 가장 최근 진단 사진 경로 (007-B가 없을 때 대신 사용)
-            var latestDiagnosisImage: String? = null
+            var latestDiagnosisImage: String? = null   // 사진 API 가 실패하면 대신 쓸 최근 진단 사진
 
-            // 비동기 통신 응답 후 View가 여전히 살아있는지 널 체크
+            // 응답을 기다리는 동안 화면이 사라졌을 수 있으니 _binding 으로 확인
             _binding?.let { safeBinding ->
                 result.onSuccess { diagnoses ->
-                    pestAdapter.submitList(diagnoses)
-                    safeBinding.tvEmpty.isVisible = diagnoses.isEmpty()
+                    // 병해충 로그는 감염된 진단만 표시 (정상 진단은 이력에 넣지 않음)
+                    val infectedOnly = diagnoses.filter { it.infected }
+                    pestAdapter.submitList(infectedOnly)
+                    safeBinding.tvEmpty.isVisible = infectedOnly.isEmpty()
                     latestDiagnosisImage = diagnoses
                         .firstOrNull { !it.imageUrl.isNullOrBlank() }
                         ?.imageUrl
-
                 }.onFailure { error ->
                     safeBinding.tvEmpty.isVisible = true
                     context?.let { ctx ->
-                        Toast.makeText(ctx, "진단 이력 로드 실패: ${error.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            ctx,
+                            getString(R.string.pest_log_load_failed, error.message.orEmpty()),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
 
-            // 2. 내 작물 최근 사진 조회 (API-007-B)
-            //    → 성공하면 그 사진, 실패(서버 미구현 404 등)하면 최근 진단 사진
-            val imageResult = repository.getLatestCropImage()
-            val photoPath = imageResult.getOrNull()?.imageUrl ?: latestDiagnosisImage
+            // 2. 최근 작물 사진 (API-007-B). 실패하면 가장 최근 진단 사진으로 대신
+            val photoPath = repository.getLatestCropImage().getOrNull()?.imageUrl ?: latestDiagnosisImage
             showCropPhoto(photoPath)
         }
     }

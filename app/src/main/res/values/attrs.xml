@@ -3,7 +3,7 @@
     SimpleLineChartView(그래프)를 XML에서 꾸밀 수 있게 해주는 속성 목록.
     예) <com.smartfarm.app.ui.common.SimpleLineChartView
             app:chartLineColor="@color/blue_primary"
-            app:chartYMin="0" app:chartYMax="35" app:chartYStep="5" ... />
+            app:chartYMin="0" app:chartYMax="40" app:chartYStep="10" ... />
     → 그래프 모양은 XML, 그래프에 들어갈 숫자는 코드(setData)가 담당.
 -->
 <resources>
@@ -17,7 +17,5 @@
         <!-- 적정 범위 띠 (둘 다 넣어야 표시) -->
         <attr name="chartNormalMin" format="float" />
         <attr name="chartNormalMax" format="float" />
-        <!-- 가장 높은 점 위에 붙일 단위 (예: °C). 안 쓰면 표시 안 함 -->
-        <attr name="chartMaxLabelUnit" format="string" />
     </declare-styleable>
 </resources>

@@ -55,17 +55,17 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.8.4")
 
 
-    //Retrofit (Backend API 통신)
+    // Retrofit (백엔드 API 통신) + 통신 로그
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    //코루틴 + lifecycleScope (API Polling 통신용)
+    // 코루틴 + lifecycleScope (화면이 살아 있는 동안만 비동기 API 호출)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 
 
     // Coil (작물 이미지 로딩용)
-    implementation("io.coil-kt:coil:2.6.0") //확인 필요
+    implementation("io.coil-kt:coil:2.6.0")
 
     // FCM (Firebase 푸시 알림용)
     implementation(platform("com.google.firebase:firebase-bom:32.8.0"))

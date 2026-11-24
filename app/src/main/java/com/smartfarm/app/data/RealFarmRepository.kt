@@ -13,16 +13,16 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 /**
- * 실제 백엔드 API 를 부르는 저장소 (센서 쪽: 대시보드 / 온도 로그 / 토양 수분 로그).
- * 서버 응답(DTO)을 화면이 쓰는 모델(ChartData, ActivityLog ...)로 바꿔서 돌려줍니다.
+ * 센서·작물 API 를 부르는 저장소 (대시보드 / 온도 로그 / 토양 수분 로그).
+ * 서버 응답(DTO)을 화면이 쓰는 모델(CurrentSensor, ChartData, ActivityLog)로 바꿔서 돌려줍니다.
  *
  * 실패하거나 5초 안에 응답이 없으면 예외 대신 null / 빈 목록을 돌려줍니다 → 화면은 "-" 또는 "기록 없음".
- * 자세한 실패 이유는 Logcat 에서 "SmartFarmAPI" 로 검색하세요.
+ * 실패 이유는 Logcat 에서 "SmartFarmAPI" 로 검색하면 볼 수 있습니다.
  */
 class RealFarmRepository(private val apiService: FarmApiService) {
 
     companion object {
-        /** 명세: 지금은 농장 하나 */
+        /** 농장 ID (현재 농장 하나) */
         const val FARM_ID = "greenhouse-01"
         private const val TAG = "SmartFarmAPI"
         /** API 하나를 최대 몇 ms 기다릴지 */
@@ -50,13 +50,12 @@ class RealFarmRepository(private val apiService: FarmApiService) {
     private suspend fun getStatus(): StatusResponse? = safeCall("status") {
         val response = apiService.getStatus(FARM_ID)
         Log.d(TAG, "status HTTP ${response.code()} / ${response.body()}")
-        if (response.isSuccessful) response.body() else null   // 센서값이 한 번도 없으면 404 → null
+        if (response.isSuccessful) response.body() else null   // 센서값을 한 번도 못 받았으면 404 → null
     }?.also { applyServerStandard(it) }
 
     /**
      * 상태 응답의 crop + targetMin/Max = 백엔드가 실제 자동 제어에 쓰는 기준.
      * 그 작물의 적정 범위를 서버 값으로 바꿔 둠 → 화면이 범위 글자를 다시 그리면 서버 값이 보임.
-     * (지금 백엔드에는 토마토 기준만 있음. 다른 작물은 앱 기본값 / GET /crops 값)
      */
     private fun applyServerStandard(status: StatusResponse) {
         val name = status.crop?.nameKo ?: return
@@ -82,8 +81,7 @@ class RealFarmRepository(private val apiService: FarmApiService) {
      * 지금 고른 작물의 적정 범위를 서버에서 받아 CropStandards 에 반영.
      * 성공하면 true (화면이 범위 글자를 다시 그리면 됨).
      * 실패하면 false → 앱 기본값(CropStandard.kt) 그대로.
-     *
-     * ⚠ 이 API 는 "조회"만 합니다. 서버의 자동 제어 작물(status 의 crop)은 바뀌지 않음.
+     * 이 API 는 조회만 합니다. 서버의 자동 제어 작물을 바꾸는 건 changeFarmCrop().
      */
     suspend fun refreshCropStandards(): Boolean {
         val current = FarmSettings.currentStandard
@@ -115,7 +113,7 @@ class RealFarmRepository(private val apiService: FarmApiService) {
 
     /**
      * 드롭다운에서 고른 작물을 서버에 알림 (서버 자동 제어 기준도 그 작물로 바뀜).
-     * 성공하면 true. 실패(아직 API 없음 404, 서버 꺼짐 등)면 false → 화면 표시만 바뀐 상태.
+     * 성공하면 true. 실패(서버 미지원 404, 서버 꺼짐 등)면 false → 화면 표시만 바뀐 상태.
      */
     suspend fun changeFarmCrop(species: String): Boolean = safeCall("changeCrop($species)") {
         val response = apiService.changeCrop(FARM_ID, CropChangeRequest(species))
@@ -141,7 +139,7 @@ class RealFarmRepository(private val apiService: FarmApiService) {
         Log.d(TAG, "telemetry HTTP ${response.code()} / ${response.body()}")
         val points = response.body()?.points
         if (response.isSuccessful && points != null) {
-            // 값이 null 인 점은 빼고 그림
+            // 그 구간에 값이 없는(null) 점은 빼고 그림
             val valid = points.mapNotNull { point -> pickValue(point)?.let { point.time to it } }
             ChartData(
                 labels = valid.map { parseHourLabel(it.first) },
@@ -171,8 +169,8 @@ class RealFarmRepository(private val apiService: FarmApiService) {
         time = formatLogTime(time),
         message = message.orEmpty(),
         type = when (reason) {
-            "TEMP_HIGH" -> ActivityType.WARNING              // ⚠ 기준 초과
-            "SOIL_LOW", "SOIL_ENOUGH" -> ActivityType.WATERING // 💧 급수
+            "TEMP_HIGH" -> ActivityType.WARNING                // 기준 초과
+            "SOIL_LOW", "SOIL_ENOUGH" -> ActivityType.WATERING // 급수
             else -> if (actuator == "waterPump") ActivityType.WATERING else ActivityType.FAN
         }
     )
@@ -180,12 +178,11 @@ class RealFarmRepository(private val apiService: FarmApiService) {
     // ===================== 공통 =====================
 
     /**
-     * API 호출을 감싸서, 실패하면 null 을 돌려줌.
+     * API 호출을 감싸서 실패·시간 초과(5초)면 null 을 돌려줌 → 서버가 꺼져 있어도 화면이 멈추지 않음.
      * 단 화면을 나가서 취소된 경우(CancellationException)는 그대로 던져야
      * 화면이 사라진 뒤에 binding 을 건드리는 문제가 생기지 않음.
      */
     private suspend fun <T> safeCall(name: String, block: suspend () -> T?): T? {
-        // TIMEOUT_MS 안에 응답이 없으면 기다리지 않고 null (서버가 꺼져 있을 때 화면이 오래 멈추지 않게)
         val result = withTimeoutOrNull(TIMEOUT_MS) {
             try {
                 block()
@@ -200,14 +197,14 @@ class RealFarmRepository(private val apiService: FarmApiService) {
         return result
     }
 
-    /** "2026-10-28T10:00:00+09:00" → "10시" (그래프 x축) */
+    /** "2026-11-20T10:00:00+09:00" → "10시" (그래프 x축) */
     private fun parseHourLabel(timeIso: String?): String = try {
         "${ZonedDateTime.parse(timeIso).hour}시"
     } catch (e: Exception) {
         ""
     }
 
-    /** "2026-10-28T13:00:00+09:00" → "10-28 13:00" (활동로그 시간) */
+    /** "2026-11-20T13:00:00+09:00" → "11-20 13:00" (활동로그 시간) */
     private fun formatLogTime(timeIso: String?): String = try {
         ZonedDateTime.parse(timeIso).format(LOG_TIME_FORMAT)
     } catch (e: Exception) {

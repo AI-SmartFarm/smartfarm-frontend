@@ -52,7 +52,12 @@
 
     <!-- ===== 내 작물 확인 ===== -->
     <string name="pest_log_title">로그</string>
-    <string name="pest_log_count">전체 %1$d건 기록</string>
+    <string name="pest_log_infected_fmt">%1$s (%2$s)</string>
+    <string name="pest_log_unknown_disease">병해</string>
+    <string name="pest_log_not_detected">정상 (병해충 미탐지)</string>
+    <string name="pest_log_action_fmt">%1$s %2$d분 가동</string>
+    <string name="pest_log_no_issue">이상 없음</string>
+    <string name="pest_log_load_failed">진단 이력을 불러오지 못했습니다: %1$s</string>
 
     <!-- ===== 병해충 발생 알림 팝업 ===== -->
     <string name="alert_chip">AI 병해충 감지 경보</string>
@@ -63,6 +68,17 @@
     <string name="alert_action_timer">타이머: %1$d분 연속 가동</string>
     <string name="alert_confirm">확인 및 조치 내역 보기</string>
     <string name="alert_close">닫기</string>
+    <!-- 자동 대응이 없는 병 (예: 황화잎말이바이러스 = 알림만) -->
+    <string name="alert_no_device_line2">직접 조치가 필요해요.</string>
+    <string name="alert_no_device_title">자동 제어 없음 (알림만)</string>
+    <string name="alert_no_device_hint">‘확인 및 조치 내역 보기’에서 안내를 확인하세요</string>
+
+    <!-- ===== 휴대폰 알림 (FCM) ===== -->
+    <string name="pest_notification_channel">병해충 알림</string>
+    <string name="pest_notification_title">🐛 병해충 감지 알림</string>
+    <string name="pest_notification_body">AI가 새 병해충 진단을 보냈어요. 눌러서 확인하세요.</string>
+    <string name="notification_permission_denied">알림을 허용하지 않으면 앱이 꺼져 있을 때 병해충 알림을 받을 수 없어요. (설정 → 앱 → 알림에서 바꿀 수 있어요)</string>
+
     <!-- ===== 작물별 적정 범위 (숫자는 코드에서 선택한 작물 값으로 채움) ===== -->
     <!-- 위쪽의 같은 이름(_fmt 없는) 문자열은 Design 탭 미리보기용 기본값(토마토) -->
     <string name="home_temperature_range_fmt">• 목표 온도 %1$d~%2$d°C</string>
