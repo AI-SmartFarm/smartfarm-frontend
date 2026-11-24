@@ -5,9 +5,8 @@ import com.google.gson.annotations.SerializedName
 /**
  * API-002-A 현재 농장 상태  GET /api/v1/farms/{farmId}/status
  *
- * 화면에 필요한 값만 받습니다. (devices, latestDiagnosis 등은 지금 쓰지 않아서 생략.
- *  JSON에 더 있는 필드는 Gson이 알아서 무시합니다)
- * crop + temperature/soilMoisture 의 targetMin·targetMax = 서버가 쓰는 "농장 작물의 적정 범위"
+ * 화면에 필요한 값만 받습니다 (JSON 의 나머지 필드는 Gson 이 무시).
+ * crop + targetMin·targetMax = 백엔드가 실제 자동 제어에 쓰는 "농장 작물의 적정 범위"
  */
 data class StatusResponse(
     @SerializedName("farmId") val farmId: String?,
@@ -27,7 +26,7 @@ data class StatusCropDto(
 /** temperature / soilMoisture 한 칸. 센서가 없으면 value 가 null */
 data class SensorValueDto(
     @SerializedName("value") val value: Double?,
-    @SerializedName("targetMin") val targetMin: Double?,      // 서버 기준 적정 범위 → CropStandards 에 반영
+    @SerializedName("targetMin") val targetMin: Double?,      // 서버 기준 적정 범위
     @SerializedName("targetMax") val targetMax: Double?,
     @SerializedName("state") val state: String?               // NORMAL / HIGH / LOW
 )

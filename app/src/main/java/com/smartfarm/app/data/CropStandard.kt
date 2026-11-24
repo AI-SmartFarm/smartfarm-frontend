@@ -4,6 +4,7 @@ package com.smartfarm.app.data
  * 작물 하나의 적정 생육 범위.
  *  - 온도: tempMin ~ tempMax (°C)
  *  - 토양 수분: soilMin ~ soilMax (%)
+ *  - species: 서버 작물 코드 (GET /api/v1/crops/{species} 에 사용)
  */
 data class CropStandard(
     val name: String,
@@ -11,7 +12,7 @@ data class CropStandard(
     val tempMax: Int,
     val soilMin: Int,
     val soilMax: Int,
-    val species: String = ""     // 서버 작물 코드 (GET /api/v1/crops/{species} 에 씀)
+    val species: String = ""
 ) {
     /** 이 온도가 적정 범위 안이면 true → 배지 "적정", 아니면 "주의" */
     fun isTemperatureNormal(value: Double) = value >= tempMin && value <= tempMax
@@ -21,23 +22,20 @@ data class CropStandard(
 }
 
 /**
- * 작물 목록 + 작물별 적정 범위표.
- * 대시보드 드롭다운의 작물 목록도 여기서 가져갑니다 (순서 = 드롭다운 순서).
+ * 작물 목록 + 작물별 적정 범위표. 대시보드 드롭다운 목록도 여기서 가져갑니다 (순서 = 드롭다운 순서).
  *
- * 화면에 들어오거나 작물을 고르면 서버(GET /api/v1/crops/{species})에서 그 작물 값을 받아 바꿉니다.
- * 서버가 꺼져 있으면 아래 DEFAULT(앱 기본값)를 그대로 씁니다.
+ * 처음에는 앱 기본값(DEFAULT)을 쓰고, 서버에서 기준값을 받으면 그 작물만 서버 값으로 바꿉니다.
+ * 서버가 꺼져 있어도 앱 기본값으로 화면이 정상 표시됩니다.
  */
 object CropStandards {
 
     /**
      * 서버에서 못 받았을 때 쓰는 앱 기본값.
-     * ⚠ 일반적인 재배 자료를 참고한 "예시 값"입니다.
+     * 온도 = 밤 적온 하한 ~ 낮 적온 상한 (농촌진흥청·제주농업기술원 재배 자료 참고)
+     * species 는 백엔드 작물 API 의 species 값과 같아야 합니다.
      */
     private val DEFAULT = listOf(
         //           이름     온도 최소, 최대   수분 최소, 최대
-        // 온도 = 밤 적온 하한 ~ 낮 적온 상한 (출처: 농촌진흥청·제주농업기술원 재배 자료)
-        // 수분 = 예시 값 (서버/시뮬레이터 기준과 맞출 것)
-        // 마지막 = 서버 작물 코드. 백엔드 GET /api/v1/crops 의 species 와 같아야 함
         CropStandard("토마토", 17, 27, 30, 50, species = "Tomato"),
         CropStandard("오이", 15, 28, 50, 70, species = "Cucumber"),
         CropStandard("고추", 18, 28, 40, 60, species = "Pepper"),
@@ -45,28 +43,22 @@ object CropStandards {
         CropStandard("딸기", 10, 20, 40, 60, species = "Strawberry")
     )
 
-    /** 지금 쓰는 목록. 처음엔 앱 기본값, 서버에서 받으면 서버 값 */
+    /** 지금 쓰는 목록 */
     var list: List<CropStandard> = DEFAULT
         private set
 
-    /** 서버에서 받은 목록으로 교체 (비어 있으면 무시하고 지금 목록 유지) */
-    fun update(newList: List<CropStandard>) {
-        if (newList.isNotEmpty()) list = newList
-    }
-
     /**
-     * 상태 API(002-A)가 알려 준 "농장 작물의 적정 범위"로 그 작물 한 줄만 바꿈.
-     * 예) 서버 작물이 토마토 22~26°C 면 → 목록의 토마토가 22~26 으로 (다른 작물은 그대로)
-     * 목록에 없는 작물이면 맨 뒤에 추가.
+     * 서버에서 받은 작물 기준값으로 그 작물 한 줄만 바꿈 (다른 작물은 그대로).
+     * 작물 코드(대소문자 무시) 또는 한글 이름이 같으면 같은 작물로 보고,
+     * 목록에 없는 작물이면 맨 뒤에 추가합니다.
      */
     fun applyServerStandard(server: CropStandard) {
-        // 같은 작물 찾기: 작물 코드(대소문자 무시)가 같거나, 한글 이름이 같으면 같은 작물
         fun sameCrop(it: CropStandard) =
             (server.species.isNotBlank() && it.species.equals(server.species, ignoreCase = true)) ||
                 it.name == server.name
 
         list = if (list.any(::sameCrop)) {
-            // 화면 이름·저장된 선택이 바뀌지 않게 앱의 이름은 그대로 두고 숫자만 서버 값으로
+            // 화면 이름과 저장된 선택이 바뀌지 않도록 이름·코드는 앱 것을 두고 숫자만 서버 값으로
             list.map { if (sameCrop(it)) server.copy(name = it.name, species = it.species) else it }
         } else {
             list + server

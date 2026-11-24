@@ -3,11 +3,13 @@ package com.smartfarm.app.ui.crop
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.smartfarm.app.R
+import com.smartfarm.app.data.actuatorName
 import com.smartfarm.app.data.dto.DiagnosisDto
 import com.smartfarm.app.databinding.ItemPestLogBinding
 
 /**
- * 병해충 로그 목록 Adapter (내 작물 확인 화면).
+ * 병해충 로그 목록 Adapter (내 작물 확인 화면). 한 줄 모양은 item_pest_log.xml.
  */
 class PestLogAdapter : RecyclerView.Adapter<PestLogAdapter.ViewHolder>() {
 
@@ -31,27 +33,33 @@ class PestLogAdapter : RecyclerView.Adapter<PestLogAdapter.ViewHolder>() {
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: DiagnosisDto) {
-            // 날짜/시각 표시 (ISO-8601 문자열 원본 또는 필요 시 가공)
+            val context = binding.root.context
+
+            // "2026-11-20T10:10:44+09:00" → "2026-11-20 10:10:44"
             binding.tvDate.text = item.diagnosedAt.take(19).replace("T", " ")
 
-            // 병명 및 중증도 표시
-            val title = if (item.infected) {
-                "${item.diseaseName ?: "병해"} (${item.severityLevel ?: "경고"})"
+            // 제목: 감염이면 "병명 (중증도)", 아니면 미탐지
+            binding.tvTitle.text = if (item.infected) {
+                context.getString(
+                    R.string.pest_log_infected_fmt,
+                    item.diseaseName ?: context.getString(R.string.pest_log_unknown_disease),
+                    item.severityLevel ?: context.getString(R.string.status_warning)
+                )
             } else {
-                "정상 (병해충 미탐지)"
+                context.getString(R.string.pest_log_not_detected)
             }
-            binding.tvTitle.text = title
 
-            // 세부 안내문구 또는 자동 조치 내역
-            val detail = when {
+            // 설명: 방제 안내 문구 → 없으면 자동 조치 내역 → 둘 다 없으면 "이상 없음"
+            val response = item.responses.orEmpty().firstOrNull()
+            binding.tvDetail.text = when {
                 !item.guide.isNullOrBlank() -> item.guide
-                item.responses.isNotEmpty() -> {
-                    val res = item.responses.first()
-                    "${res.actuator} ${res.action} (${res.durationMinutes ?: 0}분 가동)"
-                }
-                else -> "이상 없음"
+                response != null -> context.getString(
+                    R.string.pest_log_action_fmt,
+                    actuatorName(response.actuator),
+                    response.durationMinutes ?: 0
+                )
+                else -> context.getString(R.string.pest_log_no_issue)
             }
-            binding.tvDetail.text = detail
         }
     }
 }

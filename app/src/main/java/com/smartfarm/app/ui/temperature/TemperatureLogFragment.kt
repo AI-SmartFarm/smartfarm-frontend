@@ -24,8 +24,8 @@ import java.util.Locale
 /**
  * 온도 로그 화면 (대시보드 "현재온도" 카드에서 이동)
  *  - 현재 온도 + 적정/주의 배지
- *  - 시간별 온도 그래프
- *  - 활동로그(자동 제어 내역) 목록
+ *  - 최근 24시간 온도 그래프 (적정 범위 띠)
+ *  - 활동로그 (순환팬 자동 제어 기록)
  *  - 상단바 ↻ 버튼으로 새로고침
  * 화면 모양은 fragment_temperature_log.xml, 여기서는 데이터만 채웁니다.
  */
@@ -34,7 +34,7 @@ class TemperatureLogFragment : Fragment() {
     private var _binding: FragmentTemperatureLogBinding? = null
     private val binding get() = _binding!!
 
-    private val repository = RealFarmRepository(ApiClient.farmApiService) // 기존 Fake대신 Real 레포지토리 연결
+    private val repository = RealFarmRepository(ApiClient.farmApiService)
     private val logAdapter = ActivityLogAdapter()
 
     override fun onCreateView(
@@ -60,7 +60,7 @@ class TemperatureLogFragment : Fragment() {
         loadData()
     }
 
-    /** 대시보드에서 고른 작물의 적정 범위 → 범위 글자, 범례, 그래프 초록 띠 (서버 응답 기다리지 않음) */
+    /** 대시보드에서 고른 작물의 적정 범위 → 범위 글자, 범례, 그래프 초록 띠 (화면에 들어오자마자 표시) */
     private fun showCropStandard() {
         val standard = FarmSettings.currentStandard
         binding.tvRange.text = HtmlCompat.fromHtml(
@@ -72,7 +72,7 @@ class TemperatureLogFragment : Fragment() {
         binding.chart.setNormalRange(standard.tempMin.toFloat(), standard.tempMax.toFloat())
     }
 
-    /** XML 의 미리보기용 더미 값(24.5 등)을 지우고 "-" 로 비워둠 */
+    /** XML 미리보기용 값을 지우고 서버 값을 받기 전까지 "-" 로 비워둠 */
     private fun showLoadingPlaceholder() {
         binding.tvValue.text = getString(R.string.value_empty)
         binding.tvBadge.isVisible = false
@@ -87,12 +87,12 @@ class TemperatureLogFragment : Fragment() {
             val historyJob = async { repository.getTemperatureHistory() }       // API-002-B
             val logsJob = async { repository.getTemperatureLogs() }             // API-007-A (TEMP)
 
-            // 상태 API(현재값)도 기다림: 농장 작물의 서버 기준값이 여기에 같이 옴
+            // 상태 API 응답에 농장 작물의 서버 기준값이 같이 오므로 먼저 기다림
             val temperature = temperatureJob.await()
 
-            // 서버에서 작물 기준을 받았으면 범위 글자·범례·초록 띠를 서버 값으로 다시 그림
+            // 작물 기준값까지 받은 뒤, 서버 값이 반영된 범위로 범위 글자·범례·초록 띠를 다시 그림
             cropsJob.await()
-            showCropStandard()   // 서버 기준값(GET /crops 또는 상태 API)이 반영된 범위로 다시 그림
+            showCropStandard()
             val standard = FarmSettings.currentStandard
 
             // 2) ① 현재 온도 + 배지 (값이 없으면 "-", 배지 숨김)

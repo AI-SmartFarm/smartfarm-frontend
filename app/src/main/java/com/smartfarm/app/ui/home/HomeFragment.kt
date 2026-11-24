@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.smartfarm.app.R
 import com.smartfarm.app.data.CropStandards
 import com.smartfarm.app.data.FarmSettings
@@ -19,20 +20,19 @@ import com.smartfarm.app.databinding.FragmentHomeBinding
 import com.smartfarm.app.ui.common.addRefreshMenu
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import com.google.android.material.progressindicator.LinearProgressIndicator
 import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
  * 대시보드 (My Farm)
- *  1. 카드 클릭 → 화면 이동
- *  2. 현재 온도·토양 수분 (서버 API-002-A) + 상단바 ↻ 새로고침
- *  3. 작물 선택 드롭다운 → 고르면 카드의 적정 범위 글자가 그 작물 기준으로 바뀜
- * 화면 모양은 전부 fragment_home.xml 에 있고, 여기서는 "동작"만 연결합니다.
+ *  1. 현재 온도·토양 수분 (API-002-A) + 작물 목표 범위 기준 상태 바 + ↻ 새로고침
+ *  2. 작물 선택 드롭다운 → 고른 작물의 서버 기준값으로 범위 글자·상태 바를 다시 그림
+ *  3. 카드 클릭 → 온도 로그 / 토양 수분 로그 / 내 작물 확인 화면으로 이동
+ * 화면 모양은 fragment_home.xml 에 있고, 여기서는 "동작"만 연결합니다.
  */
 class HomeFragment : Fragment() {
 
-    // ViewBinding 기본 패턴: 화면이 사라질 때 null로 만들어 메모리 누수 방지
+    // ViewBinding 기본 패턴: 화면이 사라질 때 null 로 만들어 메모리 누수 방지
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
@@ -57,7 +57,7 @@ class HomeFragment : Fragment() {
         showCropRanges()
         showSensorPlaceholder()
 
-        // 상단바 오른쪽 ↻ 새로고침 (온도·토양 화면과 같은 방식)
+        // 상단바 오른쪽 ↻ 새로고침
         addRefreshMenu {
             loadSensor()
             Toast.makeText(requireContext(), R.string.refreshed_toast, Toast.LENGTH_SHORT).show()
@@ -65,7 +65,7 @@ class HomeFragment : Fragment() {
         loadSensor()
     }
 
-    /** XML 의 미리보기용 더미 값(24°C, 32%)을 지우고 "-" 로 비워둠 */
+    /** XML 미리보기용 값(24°C, 32%)을 지우고 서버 값을 받기 전까지 "-" 로 비워둠 */
     private fun showSensorPlaceholder() {
         lastTemperature = null
         lastMoisture = null
@@ -75,30 +75,25 @@ class HomeFragment : Fragment() {
     }
 
     /**
-     * 현재 온도·토양 수분을 서버(API-002-A)에서 받아 카드에 표시.
-     * 대시보드에 돌아올 때마다 다시 불러옵니다. 실패하면 "-" 표시.
+     * 현재 온도·토양 수분(API-002-A)과 고른 작물의 기준값을 서버에서 받아 카드에 표시.
+     * 대시보드에 돌아올 때마다 다시 불러오고, 실패하면 "-" 를 표시합니다.
      */
     private fun loadSensor() {
         viewLifecycleOwner.lifecycleScope.launch {
-            // 작물 목록·적정 범위와 센서값을 동시에 요청
+            // 작물 기준값과 센서값을 동시에 요청 (하나씩 기다리지 않음)
             val cropsJob = async { repository.refreshCropStandards() }
             val sensorJob = async { repository.getCurrentSensor() }
+            val cropsUpdated = cropsJob.await()
+            val sensor = sensorJob.await()
 
-            // 서버에서 작물 기준을 받았으면 드롭다운 목록과 범위 글자를 서버 값으로 다시 그림
-            if (cropsJob.await()) {
+            // 서버 기준값(작물 API 또는 상태 API)이 들어왔으면 드롭다운·범위 글자를 다시 그림
+            if (cropsUpdated || sensor != null) {
                 setupCropDropdown()
                 showCropRanges()
             }
 
-            val sensor = sensorJob.await()
             lastTemperature = sensor?.temperature
             lastMoisture = sensor?.soilMoisture
-
-            // 상태 API 가 농장 작물(토마토)의 서버 기준값을 줬을 수 있으니 범위 글자·드롭다운 다시 그림
-            if (sensor != null) {
-                setupCropDropdown()
-                showCropRanges()
-            }
 
             binding.tvTemperatureValue.text =
                 lastTemperature?.let { String.format(Locale.US, "%.1f°C", it) }
@@ -157,7 +152,7 @@ class HomeFragment : Fragment() {
         this.progress = progress
     }
 
-    /** 선택된 작물의 적정 범위를 카드 아래 글자에 표시 (• 목표 온도 20~26°C 등) */
+    /** 선택된 작물의 적정 범위를 카드 아래 글자에 표시 (• 목표 온도 17~27°C 등) */
     private fun showCropRanges() {
         val standard = FarmSettings.currentStandard
         binding.tvTemperatureRange.text =
@@ -180,7 +175,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /** 작물 선택 드롭다운: 목록은 data/CropStandard.kt 의 CropStandards 에서 가져옴 */
+    /** 작물 선택 드롭다운. 목록은 CropStandards(data/CropStandard.kt)에서 가져옴 */
     private fun setupCropDropdown() {
         val crops = CropStandards.list.map { it.name }
         val adapter = CropDropdownAdapter(requireContext(), crops)
@@ -193,14 +188,14 @@ class HomeFragment : Fragment() {
         binding.dropdownCrop.setOnItemClickListener { _, _, position, _ ->
             adapter.selectedPosition = position   // ✓ 표시 위치 변경
             FarmSettings.selectedCropIndex = position
-            showCropRanges()                       // 카드의 범위 글자도 바로 바꾸기 (일단 앱 값)
+            showCropRanges()                       // 범위 글자를 바로 바꿈 (먼저 앱 값)
             viewLifecycleOwner.lifecycleScope.launch {
-                // ① 서버에 작물 변경 알림 (PUT .../crop) → 서버 자동 제어 기준도 바뀜
+                // ① 서버에 작물 변경 요청 → 성공하면 서버 자동 제어 기준도 그 작물로 바뀜
                 val species = FarmSettings.currentStandard.species
                 if (species.isNotBlank() && repository.changeFarmCrop(species)) {
-                    loadSensor()   // 바뀐 작물 기준의 상태(목표 범위·현재값) 다시 불러오기
+                    loadSensor()
                 }
-                // ② 그 작물의 서버 기준값을 받아서 다시 그림 (GET /api/v1/crops/{species})
+                // ② 그 작물의 서버 기준값을 받아 다시 그림 (GET /api/v1/crops/{species})
                 if (repository.refreshCropStandards()) showCropRanges()
             }
             Toast.makeText(

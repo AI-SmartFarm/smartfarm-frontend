@@ -15,11 +15,10 @@ import com.smartfarm.app.data.PestAlert
 import com.smartfarm.app.databinding.DialogWarningBinding
 
 /**
- * 병해충 발생 알림 팝업.
- * nav_graph.xml 에 <dialog> 로 등록되어 있어서 Navigation 으로 띄웁니다.
- *
- * 띄우는 방법 (어느 화면에서든):
- *   (requireActivity() as MainActivity).showPestAlert(PestAlert("흰가루병", "순환팬", 60))
+ * 병해충 발생 경고 팝업.
+ * nav_graph.xml 에 <dialog> 로 등록되어 있어 Navigation 으로 띄웁니다 (MainActivity.showPestAlert).
+ *  - 자동 대응이 있는 병: "‘순환팬(을)’ 가동합니다 / 순환팬 자동 가동 중 / 타이머 60분"
+ *  - 알림만 있는 병: "직접 조치가 필요해요 / 자동 제어 없음 (알림만)"
  */
 class WarningDialogFragment : DialogFragment() {
 
@@ -51,9 +50,9 @@ class WarningDialogFragment : DialogFragment() {
             binding.tvActionTimer.isVisible = timerMinutes > 0
         } else {
             // 알림만 있는 병 (예: 황화잎말이바이러스 → 장치 제어 없음)
-            binding.tvAlertDevice.text = "직접 조치가 필요해요."
-            binding.tvActionTitle.text = "자동 제어 없음 (알림만)"
-            binding.tvActionTimer.text = "‘확인 및 조치 내역 보기’에서 안내를 확인하세요"
+            binding.tvAlertDevice.text = getString(R.string.alert_no_device_line2)
+            binding.tvActionTitle.text = getString(R.string.alert_no_device_title)
+            binding.tvActionTimer.text = getString(R.string.alert_no_device_hint)
             binding.tvActionTimer.isVisible = true
         }
 

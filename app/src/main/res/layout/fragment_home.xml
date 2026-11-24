@@ -11,7 +11,7 @@
 
     카드 4개를 각각 직접 작성했기 때문에 Android Studio의 Design 탭에서도
     실제 앱과 똑같이 보입니다.
-    숫자(24°C, 32%)와 막대 길이는 지금은 고정값이고, API 연결 후 코드에서 바꿉니다.
+    숫자(24°C, 32%)와 막대 길이는 Design 탭 미리보기용이고, 실제 값은 HomeFragment 가 서버에서 받아 채웁니다.
 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
