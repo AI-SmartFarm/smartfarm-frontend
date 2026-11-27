@@ -14,7 +14,10 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.withStarted
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
@@ -29,6 +32,8 @@ import com.smartfarm.app.databinding.ActivityMainBinding
 import com.smartfarm.app.service.PestAlertNotifier
 import com.smartfarm.app.ui.warning.WarningDialogFragment
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -42,6 +47,13 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "FCM"
+
+        /** 앱을 보고 있는 동안 새 진단을 확인하는 간격 (푸시가 늦거나 빠져도 팝업이 뜨게) */
+        private const val PEST_CHECK_INTERVAL_MS = 15_000L
+
+        /** 푸시를 받았는데 진단이 아직 조회되지 않을 때 다시 확인하는 간격과 횟수 */
+        private const val PUSH_RETRY_DELAY_MS = 3_000L
+        private const val PUSH_RETRY_COUNT = 4
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -67,17 +79,16 @@ class MainActivity : AppCompatActivity() {
         // 앱 시작 시 FCM 토큰을 백엔드에 등록 (병해충 푸시를 받기 위해)
         initFcmToken()
         askNotificationPermission()
+        startPestAlertPolling()
     }
 
     /**
-     * 앱이 화면에 나타날 때마다(처음 실행, 다른 앱에서 돌아옴, 휴대폰 알림을 눌러 열림)
-     * 새 감염 진단이 있는지 확인 → 있으면 경고 팝업.
-     * 화면에 떠 있는 동안 푸시가 오면 PestAlertNotifier 가 이 확인을 다시 실행합니다.
+     * 앱이 화면에 떠 있는 동안 푸시가 오면 PestAlertNotifier 가 바로 진단 확인을 실행합니다.
+     * (앱이 화면에 없을 때 온 푸시는 휴대폰 알림으로 표시)
      */
     override fun onStart() {
         super.onStart()
-        PestAlertNotifier.foregroundListener = { checkNewPestAlert() }
-        checkNewPestAlert()
+        PestAlertNotifier.foregroundListener = { checkPestAlertAfterPush() }
     }
 
     override fun onStop() {
@@ -85,11 +96,39 @@ class MainActivity : AppCompatActivity() {
         PestAlertNotifier.foregroundListener = null
     }
 
-    /** 진단 이력(API-008)에서 새 감염 진단을 찾아 팝업 */
-    private fun checkNewPestAlert() {
+    /**
+     * 앱이 화면에 떠 있는 동안 15초마다 새 감염 진단을 확인 → 있으면 경고 팝업.
+     * 화면에 나타나자마자(처음 실행, 다른 앱에서 돌아옴, 알림을 눌러 열림) 한 번 확인하고,
+     * 앱이 뒤로 가면 자동으로 멈췄다가 다시 나오면 이어서 확인합니다.
+     * → 푸시가 늦거나 오지 않아도, 앱을 보고 있으면 팝업이 뜸
+     */
+    private fun startPestAlertPolling() {
         lifecycleScope.launch {
-            val alert = PestAlertChecker.checkNewInfection(applicationContext) ?: return@launch
-            showPestAlert(alert)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    PestAlertChecker.checkNewInfection(applicationContext)?.let { showPestAlert(it) }
+                    delay(PEST_CHECK_INTERVAL_MS)
+                }
+            }
+        }
+    }
+
+    /**
+     * 앱을 보고 있는 중에 병해충 푸시를 받았을 때.
+     * 푸시가 진단 저장보다 먼저 도착하면 처음 조회에선 새 진단이 안 보일 수 있어서,
+     * 3초 간격으로 몇 번 더 확인합니다.
+     */
+    private fun checkPestAlertAfterPush() {
+        lifecycleScope.launch {
+            repeat(PUSH_RETRY_COUNT) { attempt ->
+                val alert = PestAlertChecker.checkNewInfection(applicationContext)
+                if (alert != null) {
+                    withStarted { showPestAlert(alert) }
+                    return@launch
+                }
+                Log.d("PestAlert", "푸시 후 확인 ${attempt + 1}회: 새 감염 진단 아직 없음")
+                delay(PUSH_RETRY_DELAY_MS)
+            }
         }
     }
 
@@ -144,13 +183,22 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * 어느 화면에서든 병해충 발생 알림 팝업 띄우기.
-     * 새 감염 진단을 찾으면 checkNewPestAlert() 가 이 함수를 불러 줍니다.
+     * 새 감염 진단을 찾으면 startPestAlertPolling() / checkPestAlertAfterPush() 가 이 함수를 불러 줍니다.
      */
     fun showPestAlert(alert: PestAlert) {
-        navController.navigate(
-            R.id.action_global_warningDialog,
-            WarningDialogFragment.createArgs(alert)
-        )
+        // 이미 경고 팝업이 떠 있으면 닫고 새 내용으로 다시 띄움 (팝업이 겹쳐 쌓이지 않게)
+        if (navController.currentDestination?.id == R.id.warningDialog) {
+            navController.popBackStack()
+        }
+        try {
+            navController.navigate(
+                R.id.action_global_warningDialog,
+                WarningDialogFragment.createArgs(alert)
+            )
+            Log.d("PestAlert", "경고 팝업 표시: ${alert.pestName}")
+        } catch (e: Exception) {
+            Log.e("PestAlert", "경고 팝업을 띄우지 못함: ${e.message}", e)
+        }
     }
 
     private fun updateToolbarTitle(destination: NavDestination) {
